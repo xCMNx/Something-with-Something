@@ -1,0 +1,115 @@
+﻿<Window x:Class="SwS.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SwS"
+        xmlns:util="clr-namespace:Wpf.Util;assembly=Ui"
+        xmlns:ui="clr-namespace:Ui;assembly=Ui"
+        mc:Ignorable="d"
+        local:CommandSinkBinding.CommandSink="{Binding}"
+        Title="MainWindow" Height="500" Width="800" WindowStartupLocation="CenterScreen">
+    <Window.DataContext>
+        <local:MainVM/>
+    </Window.DataContext>
+    <Window.CommandBindings>
+        <local:CommandSinkBinding Command="local:MainVM.SelectPathCommand" />
+    </Window.CommandBindings>
+
+    <Grid Name="MainWindowRoot">
+        <Grid Name="MainWindowMainContent" IsEnabled="{Binding Visibility, ElementName=QuestionPanel, Converter={StaticResource VisToBoolnv}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Menu Grid.Row="0" Name="MainWindowMenu" Visibility="Collapsed">
+                <MenuItem Header="Настройки задач">
+                    <MenuItem Header="Подключение" Command="{Binding ChangeTracker}"/>
+                    <MenuItem Header="Дополнительно" Command="{Binding TrackerAdvansed}"/>
+                </MenuItem>
+            </Menu>
+            <Grid Grid.Row="1" Name="MainWindowContent">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="3"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid Grid.Column="0" Name="MainWindowTrackerContent">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Name="TrackerProjectSelectorBlock">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <!--<TextBlock Grid.Column="0" Text="Проект:" Margin="5,2" VerticalAlignment="Center"/>-->
+                        <Button Margin="0,2" Grid.Column="0" Background="Transparent" Command="{Binding ChangeTracker}">
+                            <Path Margin="2" Data="{StaticResource Icons.Data.Settings}" Stretch="Uniform" Fill="Black" Height="15" Width="15"/>
+                        </Button>
+                        <Button Margin="0,2" Grid.Column="1" Background="Transparent" Command="{Binding TrackerAdvansed}">
+                            <Path Margin="2" Data="{StaticResource Icons.Data.Project}" Stretch="Uniform" Fill="Black" Height="15" Width="15"/>
+                        </Button>
+                        <Grid Grid.Column="2" Margin="2" Grid.IsSharedSizeScope="True">
+                            <ComboBox SelectedItem="{Binding Project}" ItemsSource="{Binding Projects}" ToolTip="Проект"/>
+                        </Grid>
+                    </Grid>
+                    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Issues}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Expander Header="{Binding Title}" ToolTip="{Binding Title}">
+                                        <Border MaxHeight="250" Background="LightYellow">
+                                            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                                                <TextBlock Margin="10" Text="{Binding Description}"/>
+                                            </ScrollViewer>
+                                        </Border>
+                                    </Expander>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+                <GridSplitter Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+                <Grid Grid.Column="2" Name="MainWindowRepoContent">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Name="RepoBranchSelectorBlock">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Margin="0,2" Grid.Column="0" Background="Transparent" Command="{Binding ChangeRepo}">
+                            <Path Margin="2" Data="{StaticResource Icons.Data.Settings}" Stretch="Uniform" Fill="Black" Height="15" Width="15"/>
+                        </Button>
+                        <Button Margin="0,2" Grid.Column="1" Background="Transparent" Command="{Binding RepoAdvansed}">
+                            <Path Margin="2" Data="{StaticResource Icons.Data.Branch}" Stretch="Uniform" Fill="Black" Height="15" Width="15"/>
+                        </Button>
+                        <Grid Grid.Column="2" Margin="2" Grid.IsSharedSizeScope="True">
+                            <ComboBox SelectedItem="{Binding Branch}" ItemsSource="{Binding Branches}" ToolTip="Ветка"/>
+                        </Grid>
+                    </Grid>
+                    <ListView Grid.Row="1" ItemsSource="{Binding Commits}" util:GridViewSort.Command="{Binding CommitsSortCommand}">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Title" Width="300" DisplayMemberBinding="{Binding Title}" util:GridViewSort.PropertyName="Title"/>
+                                <GridViewColumn Header="Autor" Width="Auto" DisplayMemberBinding="{Binding Autor}" util:GridViewSort.PropertyName="Autor"/>
+                                <GridViewColumn Header="Date" Width="Auto" DisplayMemberBinding="{Binding Date}" util:GridViewSort.PropertyName="Date"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </Grid>
+                <ui:RotaitingPath Grid.Column="0" Visibility="{Binding TrackerWait, Converter={StaticResource BoolToVis}}" Width="100" Opacity="0.5" GlyphData="{StaticResource Icons.Data.Wait}"/>
+                <ui:RotaitingPath Grid.Column="2" Visibility="{Binding RepoWait, Converter={StaticResource BoolToVis}}" Width="100" Opacity="0.5" GlyphData="{StaticResource Icons.Data.Wait}"/>
+            </Grid>
+        </Grid>
+        <ui:RotaitingPath Visibility="{Binding MainWait, Converter={StaticResource BoolToVis}}" Width="200" Opacity="0.5" Name="WaitPanel" GlyphData="{StaticResource Icons.Data.Wait}"/>
+        <ui:Question Name="QuestionPanel" DataContext="{Binding Question}" Visibility="{Binding Visibility}" Title="{Binding Title}" Messages="{Binding Messages}" Params="{Binding Fields}" OkCommand="{Binding Ok}" CancelCommand="{Binding Cancel}"/>
+        <ui:Toast Name="ToastPanel" DataContext="{Binding Toast}" Text="{Binding Text}" Visibility="{Binding Visibility, Mode=OneWay}" Delay="{Binding Delay}"/>
+    </Grid>
+</Window>

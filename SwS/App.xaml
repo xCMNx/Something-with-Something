@@ -1,0 +1,76 @@
+﻿<Application x:Class="SwS.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:SwS"
+             xmlns:ui="clr-namespace:Ui;assembly=Ui"
+             xmlns:core="clr-namespace:core;assembly=core"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ScrollBarTemplate.xaml" />
+                <ResourceDictionary Source="Icons.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <ui:VisibilityToBool x:Key="VisToBoolnv" Inverted="True"/>
+            <ui:BoolToVisibility x:Key="BoolToVis"/>
+
+            <SolidColorBrush Color="Black" Opacity="0.5" x:Key="RequestItem.Background"/>
+
+            <SolidColorBrush Color="White" x:Key="RequestItem.Foreground"/>
+            
+            <DataTemplate DataType="{x:Type core:CheckValueItem}">
+                <CheckBox IsChecked="{Binding IsChecked}" Content="{Binding Title}" ToolTip="{Binding Hint}" Foreground="{StaticResource RequestItem.Foreground}"/>
+            </DataTemplate>
+            
+            <DataTemplate DataType="{x:Type core:ListValueItem}">
+                <ListBox ItemsSource="{Binding List}" MaxHeight="100" Background="{StaticResource RequestItem.Background}" Foreground="{StaticResource RequestItem.Foreground}"/>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type core:ComboListValueItem}">
+                <ComboBox ItemsSource="{Binding List}" SelectedValue="{Binding Value}" MaxHeight="100"/>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type core:StringValueItem}">
+                <TextBox Text="{Binding Value}" Background="{StaticResource RequestItem.Background}" Foreground="{StaticResource RequestItem.Foreground}"/>
+            </DataTemplate>
+            
+            <DataTemplate DataType="{x:Type core:PasswordValueItem}">
+                <!--PasswordHelper позволяет создать биндинг, хотя и нарушает концепцию скрытия самого пароля. Для того, чтоб корректно отрабатывало биндингу нужно указать двухстороннюю связь-->
+                <PasswordBox local:PasswordHelper.Attach="True" local:PasswordHelper.Password="{Binding Value, Mode=TwoWay}" Background="{StaticResource RequestItem.Background}" Foreground="{StaticResource RequestItem.Foreground}"/>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type core:PathValueItem}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" MinWidth="50"/>
+                        <!--Так ширина тектовых блоков будет одна для всех PathValueItem-->
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="ButtonColumn"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox Grid.Column="0" Name="PathBox" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Background="{StaticResource RequestItem.Background}" Foreground="{StaticResource RequestItem.Foreground}"/>
+                    <!--
+                        Комманде передаем текстбокс т.к. выболнять её будет вьюмодель, а она не знает куда вернуть текст, так через параметр устанавлеваем приемник текста.
+                        И для того, чтоб значение пришло в бндинг, сам биндинг должен быть настроен на изменение значения, а не на потерю фокуса (по дефолту).
+                    -->
+                    <Button Grid.Column="1" Background="{StaticResource RequestItem.Background}" Command="local:MainVM.SelectPathCommand" CommandParameter="{Binding ElementName=PathBox}">
+                        <Path Height="10" Margin="2" Data="{StaticResource Icons.Data.Folder}" Stretch="Uniform" Fill="{StaticResource RequestItem.Foreground}"/>
+                    </Button>
+                </Grid>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type core:ParametersRequestItem}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <!--Зададим расшареную ширину, чтоб все тайтлы были одной ширины-->
+                        <ColumnDefinition Width="30*" MinWidth="50" SharedSizeGroup="TitleColumn"/>
+                        <ColumnDefinition Width="70*" MinWidth="90"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" HorizontalAlignment="Right" VerticalAlignment="Center" Text="{Binding Title}" ToolTip="{Binding Hint}"/>
+                    <UserControl Grid.Column="1" Margin="5" Content="{Binding Value}"/>
+                </Grid>
+            </DataTemplate>
+
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

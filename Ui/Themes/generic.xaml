@@ -1,0 +1,8 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:Ui">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/Ui;component/RotaitingPath.Generic.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/Ui;component/GridExpander.Generic.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/Ui;component/Question.Generic.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/Ui;component/Toast.Generic.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+</ResourceDictionary>
