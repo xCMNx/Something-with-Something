@@ -6,6 +6,6 @@ namespace core.Interfaces.Tracker
 	public interface ITracker : IModule
 	{
 		IList<IProject> Projects { get; }
-		Task<IList<IIssue>> GetIssuesAsync(IProject project, ShowTextRequest showTextRequest);
+		Task<IList<IIssue>> GetIssuesAsync(IProject project, ShowText showText);
 	}
 }

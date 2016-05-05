@@ -14,6 +14,8 @@
     </Window.DataContext>
     <Window.CommandBindings>
         <local:CommandSinkBinding Command="local:MainVM.SelectPathCommand" />
+        <local:CommandSinkBinding Command="local:MainVM.RepoSearchCommit" />
+        <local:CommandSinkBinding Command="local:MainVM.RepoCreatebranch" />
     </Window.CommandBindings>
 
     <Grid Name="MainWindowRoot">
@@ -34,7 +36,7 @@
                     <ColumnDefinition Width="3"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <Grid Grid.Column="0" Name="MainWindowTrackerContent">
+                <Grid Grid.Column="0" Name="MainWindowTrackerContent" IsEnabled="{Binding Visibility, ElementName=TrackerWaitPanel, Converter={StaticResource VisToBoolnv}}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
@@ -46,10 +48,10 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <!--<TextBlock Grid.Column="0" Text="Проект:" Margin="5,2" VerticalAlignment="Center"/>-->
-                        <Button Margin="0,2" Grid.Column="0" Background="Transparent" Command="{Binding ChangeTracker}">
+                        <Button Margin="0,2" Grid.Column="0" Background="Transparent" Command="{Binding ChangeTracker}" ToolTip="Настройки трекера">
                             <Path Margin="2" Data="{StaticResource Icons.Data.Settings}" Stretch="Uniform" Fill="Black" Height="15" Width="15"/>
                         </Button>
-                        <Button Margin="0,2" Grid.Column="1" Background="Transparent" Command="{Binding TrackerAdvansed}">
+                        <Button Margin="0,2" Grid.Column="1" Background="Transparent" Command="{Binding TrackerAdvansed}" ToolTip="Настройки задач">
                             <Path Margin="2" Data="{StaticResource Icons.Data.Project}" Stretch="Uniform" Fill="Black" Height="15" Width="15"/>
                         </Button>
                         <Grid Grid.Column="2" Margin="2" Grid.IsSharedSizeScope="True">
@@ -60,7 +62,18 @@
                         <ItemsControl ItemsSource="{Binding Issues}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Expander Header="{Binding Title}" ToolTip="{Binding Title}">
+                                    <Expander ToolTip="{Binding Title}">
+                                        <Expander.Header>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Background="Transparent" Padding="2,0" ToolTip="Найти коммиты" BorderBrush="{x:Null}" Command="local:MainVM.RepoSearchCommit" CommandParameter="{Binding}">
+                                                    <Path Data="{StaticResource Icons.Data.SearchCommit}" Fill="Black" Stretch="Uniform" Width="15" Height="15"/>
+                                                </Button>
+                                                <Button Background="Transparent" Padding="2,0" ToolTip="Создать ветку" BorderBrush="{x:Null}" Command="local:MainVM.RepoCreatebranch" CommandParameter="{Binding}">
+                                                    <Path Data="{StaticResource Icons.Data.NewBranch}" Fill="Black" Stretch="Uniform" Width="15" Height="15"/>
+                                                </Button>
+                                                <ContentPresenter Margin="2" Content="{Binding}"/>
+                                            </StackPanel>
+                                        </Expander.Header>
                                         <Border MaxHeight="250" Background="LightYellow">
                                             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                                                 <TextBlock Margin="10" Text="{Binding Description}"/>
@@ -73,7 +86,7 @@
                     </ScrollViewer>
                 </Grid>
                 <GridSplitter Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
-                <Grid Grid.Column="2" Name="MainWindowRepoContent">
+                <Grid Grid.Column="2" Name="MainWindowRepoContent" IsEnabled="{Binding Visibility, ElementName=RepoWaitPanel, Converter={StaticResource VisToBoolnv}}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
@@ -84,10 +97,10 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <Button Margin="0,2" Grid.Column="0" Background="Transparent" Command="{Binding ChangeRepo}">
+                        <Button Margin="0,2" Grid.Column="0" Background="Transparent" Command="{Binding ChangeRepo}" ToolTip="Настройки репозитория">
                             <Path Margin="2" Data="{StaticResource Icons.Data.Settings}" Stretch="Uniform" Fill="Black" Height="15" Width="15"/>
                         </Button>
-                        <Button Margin="0,2" Grid.Column="1" Background="Transparent" Command="{Binding RepoAdvansed}">
+                        <Button Margin="0,2" Grid.Column="1" Background="Transparent" Command="{Binding RepoAdvansed}" ToolTip="Настройки веток и коммитов">
                             <Path Margin="2" Data="{StaticResource Icons.Data.Branch}" Stretch="Uniform" Fill="Black" Height="15" Width="15"/>
                         </Button>
                         <Grid Grid.Column="2" Margin="2" Grid.IsSharedSizeScope="True">
@@ -104,8 +117,8 @@
                         </ListView.View>
                     </ListView>
                 </Grid>
-                <ui:RotaitingPath Grid.Column="0" Visibility="{Binding TrackerWait, Converter={StaticResource BoolToVis}}" Width="100" Opacity="0.5" GlyphData="{StaticResource Icons.Data.Wait}"/>
-                <ui:RotaitingPath Grid.Column="2" Visibility="{Binding RepoWait, Converter={StaticResource BoolToVis}}" Width="100" Opacity="0.5" GlyphData="{StaticResource Icons.Data.Wait}"/>
+                <ui:RotaitingPath Grid.Column="0" Name="TrackerWaitPanel" Visibility="{Binding TrackerWait, Converter={StaticResource BoolToVis}}" Width="100" Opacity="0.5" GlyphData="{StaticResource Icons.Data.Wait}"/>
+                <ui:RotaitingPath Grid.Column="2" Name="RepoWaitPanel" Visibility="{Binding RepoWait, Converter={StaticResource BoolToVis}}" Width="100" Opacity="0.5" GlyphData="{StaticResource Icons.Data.Wait}"/>
             </Grid>
         </Grid>
         <ui:RotaitingPath Visibility="{Binding MainWait, Converter={StaticResource BoolToVis}}" Width="200" Opacity="0.5" Name="WaitPanel" GlyphData="{StaticResource Icons.Data.Wait}"/>

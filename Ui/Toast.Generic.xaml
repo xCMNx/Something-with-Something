@@ -10,13 +10,16 @@
         <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="FontSize" Value="18"/>
         <Setter Property="Padding" Value="20"/>
+        <Setter Property="Focusable" Value="True"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type local:Toast}">
                     <Border Visibility="{TemplateBinding Visibility}" Background="{TemplateBinding Background}" Name="Toast_BG">
                         <Grid VerticalAlignment="Center">
                             <Border Background="Black" Opacity="0.3"/>
-                            <TextBlock HorizontalAlignment="Center" 
+                            <TextBlock 
+                                       IsHitTestVisible="False" 
+                                       HorizontalAlignment="Center" 
                                        FontSize="{TemplateBinding FontSize}" 
                                        FontFamily="{TemplateBinding FontFamily}" 
                                        Foreground="{TemplateBinding Foreground}" 
@@ -24,6 +27,7 @@
                                        FontStyle="{TemplateBinding FontStyle}"
                                        Padding="{TemplateBinding Padding}"
                                        Text="{TemplateBinding Text}"
+                                       TextWrapping="WrapWithOverflow"
                             />
                         </Grid>
                     </Border>

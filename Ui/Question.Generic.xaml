@@ -13,7 +13,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type local:Question}">
                     <Border Background="{TemplateBinding Background}">
-                        <Grid  MinWidth="200" MinHeight="100" VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <Grid  MinWidth="300" MinHeight="100" VerticalAlignment="Center" HorizontalAlignment="Center">
                             <Border Background="Black" Opacity="0.3"/>
                             <Border BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
                                 <Grid Grid.IsSharedSizeScope="True">

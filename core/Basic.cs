@@ -12,14 +12,35 @@ namespace core
 	public interface IParametersRequestItem
 	{
 		string Title { get; }
-		IParametersValueItem Value { get; }
+		object Value { get; set; }
 		string Hint { get; }
 	}
 
 	public class ParametersRequestItem : IParametersRequestItem
 	{
 		public string Title { get; set; }
-		public IParametersValueItem Value { get; set; }
+		public object Value { get; set; }
+		public string Hint { get; set; }
+	}
+
+	public class HeaderRequestItem : IParametersRequestItem
+	{
+		public string Title { get; set; }
+		public object Value { get { throw new InvalidOperationException(); } set { throw new InvalidOperationException(); } }
+		public string Hint { get; set; }
+	}
+
+	public class BoolRequestItem : IParametersRequestItem
+	{
+		public string Title { get; set; }
+		public object Value { get; set; }
+		public string Hint { get; set; }
+	}
+
+	public class MemoRequestItem : IParametersRequestItem
+	{
+		public string Title { get; set; }
+		public object Value { get; set; }
 		public string Hint { get; set; }
 	}
 
@@ -92,12 +113,22 @@ namespace core
 		public PasswordValueItem(string val) : base(val) { }
 	}
 
+	public class BoolValueItem : IParametersValueItem
+	{
+		public object Value { get; set; }
+		public object Bool
+		{
+			get { return (bool)Value; }
+			set { Value = value; }
+		}
+	}
+
 	public class PathValueItem : StringValueItem
 	{
 		public PathValueItem(string path) : base(path) { }
 	}
 
 	public delegate Task<bool> ParametersRequest(IList<IParametersRequestItem> requestFields, string title = null, params string[] messages);
-	public delegate Task ShowTextRequest(string text, int delay = -1);
+	public delegate Task ShowText(string text, int delay = -1);
 
 }

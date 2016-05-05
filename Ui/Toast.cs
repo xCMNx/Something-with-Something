@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media.Animation;
 
 namespace Ui
@@ -24,6 +25,7 @@ namespace Ui
 
 		void StartAnimation()
 		{
+			SetCurrentValue(OpacityProperty, 1d);
 			DoubleAnimation animation = new DoubleAnimation() {
 				BeginTime = TimeSpan.FromMilliseconds(Delay),
 				Duration = TimeSpan.FromMilliseconds(Duration),
@@ -41,7 +43,6 @@ namespace Ui
 		private void Animation_Completed(object sender, EventArgs e)
 		{
 			SetCurrentValue(VisibilityProperty, Visibility.Hidden);
-			SetCurrentValue(OpacityProperty, 1d);
 		}
 
 		public static readonly DependencyProperty TextProperty = DependencyProperty.Register(
@@ -73,13 +74,19 @@ namespace Ui
 			nameof(Delay),
 			typeof(int),
 			typeof(Toast),
-			new PropertyMetadata(2000)
+			new PropertyMetadata(3000)
 		);
 
 		public int Delay
 		{
 			get { return (int)GetValue(DelayProperty); }
 			set { SetValue(DelayProperty, value); }
+		}
+
+		protected override void OnMouseRightButtonUp(MouseButtonEventArgs e)
+		{
+			SetCurrentValue(VisibilityProperty, Visibility.Hidden);
+			base.OnMouseRightButtonUp(e);
 		}
 	}
 }

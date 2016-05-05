@@ -145,18 +145,50 @@ namespace SwS
 		public ICommand CommitsSortCommand { get; private set; }
 		public Command ChangeRepo { get; private set; }
 		public Command RepoAdvansed { get; private set; }
+		public static readonly RoutedCommand RepoSearchCommit = new RoutedCommand();
+		public static readonly RoutedCommand RepoCreatebranch = new RoutedCommand();
 
 		protected void InitRepoCommands()
 		{
 			CommitsSortCommand = new Command(CommitsSortCommandExecute);
 			ChangeRepo = new Command(a => UpdateRepo());
 			RepoAdvansed = new Command(a => ConfigurateRepo(), o => Repo is IModuleConfigurable);
+			RegisterCommand(
+				RepoSearchCommit,
+				param => true,
+				SearchCommit
+			);
+			RegisterCommand(
+				RepoCreatebranch,
+				param => true,
+				Createbranch
+			);
 		}
 
 		public async void ConfigurateRepo()
 		{
 			if (await (Repo as IModuleConfigurable).ConfigurateAsync(Question.ShowAsync, Toast.ShowAsync))
 				UpdateCommits();
+		}
+
+		public async void SearchCommit(object prop)
+		{
+			RepoWait = true;
+			try
+			{
+				_commits = await Repo.GetCommitsAsync(prop as IIssue, Toast.ShowAsync);
+				UpdateCommitsList();
+			}
+			finally
+			{
+				RepoWait = false;
+			}
+		}
+
+		public async void Createbranch(object prop)
+		{
+			if (await Repo.CreateBranch(prop as IIssue, Question.ShowAsync, Toast.ShowAsync))
+				NotifyPropertyChanged(nameof(Branches));
 		}
 
 		/// <summary>

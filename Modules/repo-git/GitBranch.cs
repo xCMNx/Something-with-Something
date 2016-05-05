@@ -4,9 +4,10 @@ namespace repo_git
 {
 	class GitBranch : BranchBase
 	{
+		public string FullName { get; set; }
 		public override string ToString()
 		{
-			return Title;
+			return FullName;
 		}
 	}
 }

@@ -8,13 +8,15 @@ namespace SwS
 	{
 		public Visibility Visibility { get; private set; } = Visibility.Hidden;
 		public string Text { get; private set; }
-		public int Delay { get; private set; } = 2000;
+		const int DEFAULT_DELAY = 3000;
+		public int Delay { get; private set; } = DEFAULT_DELAY;
 
 		public void Show(string text, int delay = -1)
 		{
 			Text = text;
 			Visibility = Visibility.Visible;
-			if (delay != Delay && delay > 0)
+			delay = delay > 0 ? delay : DEFAULT_DELAY;
+			if (delay != Delay)
 			{
 				Delay = delay;
 				NotifyPropertyChanged(nameof(Delay));

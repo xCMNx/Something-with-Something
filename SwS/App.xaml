@@ -67,8 +67,20 @@
                         <ColumnDefinition Width="70*" MinWidth="90"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" HorizontalAlignment="Right" VerticalAlignment="Center" Text="{Binding Title}" ToolTip="{Binding Hint}"/>
-                    <UserControl Grid.Column="1" Margin="5" Content="{Binding Value}"/>
+                    <ContentControl Grid.Column="1" Margin="5" Content="{Binding Value}"/>
                 </Grid>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type core:BoolRequestItem}">
+                <CheckBox IsChecked="{Binding Value}" ToolTip="{Binding Hint}">
+                    <TextBlock Text="{Binding Title}" ToolTip="{Binding Hint}" Foreground="{StaticResource RequestItem.Foreground}"/>
+                </CheckBox>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type core:HeaderRequestItem}">
+                <Border BorderBrush="{StaticResource RequestItem.Foreground}" BorderThickness="0,0,0,1" Margin="0,2,0,0">
+                    <TextBlock Margin="4,0" FontWeight="Bold" Text="{Binding Title}" ToolTip="{Binding Hint}" Foreground="{StaticResource RequestItem.Foreground}"/>
+                </Border>
             </DataTemplate>
 
         </ResourceDictionary>

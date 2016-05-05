@@ -5,11 +5,11 @@ namespace core.Interfaces
 {
 	public interface IModule : INotifyPropertyChanged
 	{
-		Task<bool> UpdateAsync(ParametersRequest onParametersRequest, ShowTextRequest showTextRequest);
+		Task<bool> UpdateAsync(ParametersRequest parametersRequest, ShowText showText);
 	}
 
 	public interface IModuleConfigurable : INotifyPropertyChanged
 	{
-		Task<bool> ConfigurateAsync(ParametersRequest onParametersRequest, ShowTextRequest showTextRequest);
+		Task<bool> ConfigurateAsync(ParametersRequest parametersRequest, ShowText showText);
 	}
 }

@@ -53,29 +53,30 @@ namespace tracker_redmine
 		ObservableCollectionEx<IProject> _Projects = new ObservableCollectionEx<IProject>();
 		public IList<IProject> Projects => _Projects;
 
-		protected async Task<bool> AskAuthInfo(ParametersRequest onParametersRequest, string message = null)
+		protected async Task<bool> AskAuthInfo(ParametersRequest parametersRequest, string message = null)
 		{
-			var dict = new ParametersRequestItem[] {
+			var dict = new IParametersRequestItem[] {
 				new ParametersRequestItem(){ Title = "Url", Value = new StringValueItem(Url) }
+				,new HeaderRequestItem() { Title = "Авторизация" }
 				,new ParametersRequestItem(){ Title = "User", Value = new StringValueItem(User) }
 				,new ParametersRequestItem(){ Title = "Password", Value = new PasswordValueItem(Password) }
 			};
 
-			if (await onParametersRequest(dict, "Redmine: Настройки соединения", message))
+			if (await parametersRequest(dict, "Redmine: Настройки соединения", message))
 			{
 				Url = (dict[0].Value as StringValueItem).String;
-				User = (dict[1].Value as StringValueItem).String;
-				Password = (dict[2].Value as StringValueItem).String;
+				User = (dict[2].Value as StringValueItem).String;
+				Password = (dict[3].Value as StringValueItem).String;
 				return true;
 			}
 			return false;
 		}
 
 		protected RedmineManager Manager;
-		protected async Task<RedmineManager> GetNew(ParametersRequest onParametersRequest)
+		protected async Task<RedmineManager> GetNew(ParametersRequest parametersRequest)
 		{
 			string message = null;
-			while (await AskAuthInfo(onParametersRequest, message))
+			while (await AskAuthInfo(parametersRequest, message))
 			{
 				try
 				{
@@ -98,11 +99,11 @@ namespace tracker_redmine
 			Helpers.Post(() => _Projects.Reset(projects.Select(p => new RedmineProject() { Title = p.Name, Identifier = p.Id })));
 		}
 
-		public async Task<bool> UpdateAsync(ParametersRequest onParametersRequest, ShowTextRequest showTextRequest)
+		public async Task<bool> UpdateAsync(ParametersRequest parametersRequest, ShowText showText)
 		{
 			try
 			{
-				var manager = await GetNew(onParametersRequest);
+				var manager = await GetNew(parametersRequest);
 				if (manager != null)
 				{
 					UpdateProjects(manager);
@@ -112,7 +113,7 @@ namespace tracker_redmine
 			}
 			catch (Exception e)
 			{
-				await showTextRequest(e.Message);
+				await showText(e.Message);
 				Helpers.ConsoleWrite(e.Message, ConsoleColor.Yellow);
 			}
 			return false;
@@ -120,7 +121,7 @@ namespace tracker_redmine
 
 		readonly char[] ValuesDelimiter = { '|' };
 
-		public async Task<bool> ConfigurateAsync(ParametersRequest onParametersRequest, ShowTextRequest showTextRequest)
+		public async Task<bool> ConfigurateAsync(ParametersRequest parametersRequest, ShowText showText)
 		{
 			try
 			{
@@ -142,7 +143,7 @@ namespace tracker_redmine
 					}
 				};
 
-				if (await onParametersRequest(dict, "Redmine: Настройки фильтра"))
+				if (await parametersRequest(dict, "Redmine: Настройки фильтра"))
 				{
 					Trackers = string.Join("|", tItems.Where(itm => itm.IsChecked).Select(itm => trks[itm.Title].Id.ToString()).ToArray());
 					Statuses = string.Join("|", sItems.Where(itm => itm.IsChecked).Select(itm => stts[itm.Title].Id.ToString()).ToArray());
@@ -151,13 +152,13 @@ namespace tracker_redmine
 			}
 			catch (Exception e)
 			{
-				await showTextRequest(e.Message);
+				await showText(e.Message);
 				Helpers.ConsoleWrite(e.Message, ConsoleColor.Yellow);
 			}
 			return false;
 		}
 
-		public IList<IIssue> GetIssues(IProject project, ShowTextRequest showTextRequest)
+		public IList<IIssue> GetIssues(IProject project, ShowText showText)
 		{
 			try
 			{
@@ -174,7 +175,8 @@ namespace tracker_redmine
 
 				return issues.Select(i => new RedmineIssue()
 				{
-					Title = string.Format("{{{2}}}[{1}] {0}", i.Subject, i.Tracker?.Name, i.Priority.Id),
+					Title = i.Subject,
+					Tracker = i.Tracker?.Name,
 					Description = string.Format("Приоритет: {6}\r\nСостояние: {0}\r\nАвтор: {1}\r\nСоздана: {2}\r\nОбновлена: {3}\r\nКатегория: {4}\r\n\r\n{5}", i.Status?.Name, i.Author?.Name, i.CreatedOn, i.UpdatedOn, i.Category?.Name, i.Description, i.Priority.Name),
 					Identifier = i.Id,
 					Priority = i.Priority.Id
@@ -182,15 +184,15 @@ namespace tracker_redmine
 			}
 			catch (Exception e)
 			{
-				showTextRequest(e.Message);
+				showText(e.Message);
 				Helpers.ConsoleWrite(e.Message, ConsoleColor.Yellow);
 			}
 			return new IIssue[0];
 		}
 
-		public Task<IList<IIssue>> GetIssuesAsync(IProject project, ShowTextRequest showTextRequest)
+		public Task<IList<IIssue>> GetIssuesAsync(IProject project, ShowText showText)
 		{
-			return Task<IList<IIssue>>.Factory.StartNew(() => GetIssues(project, showTextRequest));
+			return Task<IList<IIssue>>.Factory.StartNew(() => GetIssues(project, showText));
 		}
 	}
 }
