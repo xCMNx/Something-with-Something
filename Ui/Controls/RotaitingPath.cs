@@ -2,9 +2,9 @@
 using System.Windows.Controls;
 using System.Windows.Media;
 
-namespace Ui
+namespace Ui.Controls
 {
-	public class RotaitingPath : UserControl
+	public class RotaitingPath : Control
 	{
 		static RotaitingPath()
 		{

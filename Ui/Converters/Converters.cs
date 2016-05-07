@@ -4,7 +4,7 @@ using System.Windows;
 using System.Windows.Data;
 
 
-namespace Ui
+namespace Ui.Converters
 {
 	/// <summary>
 	/// Convert Level to left margin

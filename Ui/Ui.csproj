@@ -19,7 +19,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>..\bin\Debug\</OutputPath>
-	<IntermediateOutputPath>..\obj\Debug\</IntermediateOutputPath>
+    <IntermediateOutputPath>..\obj\Debug\</IntermediateOutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -29,7 +29,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\bin\Release\</OutputPath>
-	<IntermediateOutputPath>..\obj\Release\</IntermediateOutputPath>
+    <IntermediateOutputPath>..\obj\Release\</IntermediateOutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -44,44 +44,44 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BindableBase.cs" />
-    <Compile Include="BoolToVisibility.cs" />
-    <Compile Include="CheckBox.xaml.cs">
-      <DependentUpon>CheckBox.xaml</DependentUpon>
-    </Compile>
+    <Compile Include="Controls\ProgressRing.cs" />
+    <Compile Include="Converters\BoolInvertConverter.cs" />
+    <Compile Include="Converters\BoolToVisibility.cs" />
     <Compile Include="Command.cs" />
-    <Compile Include="Converters.cs" />
-    <Compile Include="GridExpander.cs" />
-    <Compile Include="ObjectToVisibility.cs" />
+    <Compile Include="Converters\Converters.cs" />
+    <Compile Include="Controls\GridExpander.cs" />
+    <Compile Include="Controls\MetroProggressBar.cs" />
+    <Compile Include="Converters\ObjectToVisibility.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Question.cs" />
-    <Compile Include="RotaitingPath.cs" />
-    <Compile Include="Toast.cs" />
-    <Compile Include="TreeListView.cs" />
+    <Compile Include="Controls\Question.cs" />
+    <Compile Include="Controls\RotaitingPath.cs" />
+    <Compile Include="Controls\Toast.cs" />
+    <Compile Include="Controls\TreeListView.cs" />
     <Compile Include="Util.cs" />
-    <Compile Include="VisibilityToBool.cs" />
+    <Compile Include="Converters\VisibilityToBool.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Page Include="CheckBox.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="GridExpander.Generic.xaml">
+    <Page Include="Themes\GridExpander.Generic.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="ScrollBarTemplate.xaml">
+    <Page Include="Themes\MetroProgressBar.Generic.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Toast.Generic.xaml">
+    <Page Include="Themes\ProgressRing.Generic.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Question.Generic.xaml">
+    <Page Include="Themes\Toast.Generic.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="RotaitingPath.Generic.xaml">
+    <Page Include="Themes\Question.Generic.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\RotaitingPath.Generic.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

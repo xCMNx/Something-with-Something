@@ -1,6 +1,6 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:local="clr-namespace:Ui">
+                    xmlns:local="clr-namespace:Ui.Controls">
 
     <SolidColorBrush Color="Black" Opacity="0.3" x:Key="Question.Background.Brush"/>
     <SolidColorBrush Color="White" Opacity="0.8" x:Key="Question.Foreground.Brush"/>
@@ -17,13 +17,13 @@
                     <Border Visibility="{TemplateBinding Visibility}" Background="{TemplateBinding Background}" Name="Toast_BG">
                         <Grid VerticalAlignment="Center">
                             <Border Background="Black" Opacity="0.3"/>
-                            <TextBlock 
-                                       IsHitTestVisible="False" 
-                                       HorizontalAlignment="Center" 
-                                       FontSize="{TemplateBinding FontSize}" 
-                                       FontFamily="{TemplateBinding FontFamily}" 
-                                       Foreground="{TemplateBinding Foreground}" 
-                                       FontWeight="{TemplateBinding FontWeight}" 
+                            <TextBlock
+                                       IsHitTestVisible="False"
+                                       HorizontalAlignment="Center"
+                                       FontSize="{TemplateBinding FontSize}"
+                                       FontFamily="{TemplateBinding FontFamily}"
+                                       Foreground="{TemplateBinding Foreground}"
+                                       FontWeight="{TemplateBinding FontWeight}"
                                        FontStyle="{TemplateBinding FontStyle}"
                                        Padding="{TemplateBinding Padding}"
                                        Text="{TemplateBinding Text}"

@@ -3,9 +3,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace Ui
+namespace Ui.Controls
 {
-	public class Question: UserControl
+	public class Question: Control
 	{
 		static Question()
 		{

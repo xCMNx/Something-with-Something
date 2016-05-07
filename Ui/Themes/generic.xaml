@@ -1,8 +1,10 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:Ui">
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="pack://application:,,,/Ui;component/RotaitingPath.Generic.xaml" />
-        <ResourceDictionary Source="pack://application:,,,/Ui;component/GridExpander.Generic.xaml" />
-        <ResourceDictionary Source="pack://application:,,,/Ui;component/Question.Generic.xaml" />
-        <ResourceDictionary Source="pack://application:,,,/Ui;component/Toast.Generic.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/Ui;component/Themes/RotaitingPath.Generic.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/Ui;component/Themes/GridExpander.Generic.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/Ui;component/Themes/Question.Generic.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/Ui;component/Themes/Toast.Generic.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/Ui;component/Themes/MetroProgressBar.Generic.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/Ui;component/Themes/ProgressRing.Generic.xaml" />
     </ResourceDictionary.MergedDictionaries>
 </ResourceDictionary>

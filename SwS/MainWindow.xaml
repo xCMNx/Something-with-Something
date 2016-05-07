@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SwS"
         xmlns:util="clr-namespace:Wpf.Util;assembly=Ui"
-        xmlns:ui="clr-namespace:Ui;assembly=Ui"
+        xmlns:ui="clr-namespace:Ui.Controls;assembly=Ui"
         mc:Ignorable="d"
         local:CommandSinkBinding.CommandSink="{Binding}"
         Title="MainWindow" Height="500" Width="800" WindowStartupLocation="CenterScreen">
@@ -36,7 +36,7 @@
                     <ColumnDefinition Width="3"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <Grid Grid.Column="0" Name="MainWindowTrackerContent" IsEnabled="{Binding Visibility, ElementName=TrackerWaitPanel, Converter={StaticResource VisToBoolnv}}">
+                <Grid Grid.Column="0" Name="MainWindowTrackerContent" IsEnabled="{Binding TrackerWait, Converter={StaticResource BoolInvert}}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
@@ -86,7 +86,7 @@
                     </ScrollViewer>
                 </Grid>
                 <GridSplitter Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
-                <Grid Grid.Column="2" Name="MainWindowRepoContent" IsEnabled="{Binding Visibility, ElementName=RepoWaitPanel, Converter={StaticResource VisToBoolnv}}">
+                <Grid Grid.Column="2" Name="MainWindowRepoContent" IsEnabled="{Binding RepoWait, Converter={StaticResource BoolInvert}}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
@@ -117,11 +117,11 @@
                         </ListView.View>
                     </ListView>
                 </Grid>
-                <ui:RotaitingPath Grid.Column="0" Name="TrackerWaitPanel" Visibility="{Binding TrackerWait, Converter={StaticResource BoolToVis}}" Width="100" Opacity="0.5" GlyphData="{StaticResource Icons.Data.Wait}"/>
-                <ui:RotaitingPath Grid.Column="2" Name="RepoWaitPanel" Visibility="{Binding RepoWait, Converter={StaticResource BoolToVis}}" Width="100" Opacity="0.5" GlyphData="{StaticResource Icons.Data.Wait}"/>
+                <ui:ProgressRing Grid.Column="0" IsActive="{Binding TrackerWait}"/>
+                <ui:ProgressRing Grid.Column="2" IsActive="{Binding RepoWait}"/>
             </Grid>
+            <ui:MetroProgressBar IsIndeterminate="{Binding MainWait}" EllipseDiameter="5" Foreground="Black"/>
         </Grid>
-        <ui:RotaitingPath Visibility="{Binding MainWait, Converter={StaticResource BoolToVis}}" Width="200" Opacity="0.5" Name="WaitPanel" GlyphData="{StaticResource Icons.Data.Wait}"/>
         <ui:Question Name="QuestionPanel" DataContext="{Binding Question}" Visibility="{Binding Visibility}" Title="{Binding Title}" Messages="{Binding Messages}" Params="{Binding Fields}" OkCommand="{Binding Ok}" CancelCommand="{Binding Cancel}"/>
         <ui:Toast Name="ToastPanel" DataContext="{Binding Toast}" Text="{Binding Text}" Visibility="{Binding Visibility, Mode=OneWay}" Delay="{Binding Delay}"/>
     </Grid>

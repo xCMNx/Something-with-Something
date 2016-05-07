@@ -4,9 +4,9 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
 
-namespace Ui
+namespace Ui.Controls
 {
-	public class Toast: UserControl
+	public class Toast: Control
 	{
 		static Toast()
 		{

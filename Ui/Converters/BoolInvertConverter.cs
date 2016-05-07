@@ -1,17 +1,14 @@
 ﻿using System;
 using System.Globalization;
-using System.Windows;
 using System.Windows.Data;
 
-namespace Ui
+namespace Ui.Converters
 {
-	public class VisibilityToBool : IValueConverter
+	public class BoolInvertConverter : IValueConverter
 	{
-		public bool Inverted { get; set; } = false;
 		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			bool val = (Visibility)value == Visibility.Visible;
-			return Inverted ? !val : val;
+			return !(bool)value;
 		}
 
 		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

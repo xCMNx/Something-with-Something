@@ -8,7 +8,7 @@ using System.Windows.Input;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 
-namespace Ui
+namespace Ui.Controls
 {
 	/// <summary>
 	/// Specifies different collapse modes of a GridExpander.
