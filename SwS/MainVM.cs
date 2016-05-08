@@ -268,7 +268,8 @@ namespace SwS
 		public Command ChangeRepo { get; private set; }
 		public Command RepoAdvansed { get; private set; }
 		public static readonly RoutedCommand RepoSearchCommit = new RoutedCommand();
-		public static readonly RoutedCommand RepoCreatebranch = new RoutedCommand();
+		public static readonly RoutedCommand RepoCreateBranch = new RoutedCommand();
+		public static readonly RoutedCommand RepoSelectBranch = new RoutedCommand();
 
 		protected void InitRepoCommands()
 		{
@@ -281,9 +282,14 @@ namespace SwS
 				SearchCommit
 			);
 			RegisterCommand(
-				RepoCreatebranch,
+				RepoCreateBranch,
 				param => true,
-				Createbranch
+				CreateBranch
+			);
+			RegisterCommand(
+				RepoSelectBranch,
+				param => true,
+				SelectBranch
 			);
 		}
 
@@ -315,10 +321,16 @@ namespace SwS
 			}
 		}
 
-		public async void Createbranch(object prop)
+		public async void CreateBranch(object prop)
 		{
 			if (await Repo.CreateBranch(prop as IIssue, Question.ShowAsync, Toast.ShowAsync))
 				NotifyPropertyChanged(nameof(Branches));
+		}
+
+		public async void SelectBranch(object prop)
+		{
+			Branch = await Repo.GetBranch(prop as IIssue, Question.ShowAsync, Toast.ShowAsync);
+			NotifyPropertyChanged(nameof(Branches));
 		}
 
 		/// <summary>

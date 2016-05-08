@@ -15,7 +15,8 @@
     <Window.CommandBindings>
         <local:CommandSinkBinding Command="local:MainVM.SelectPathCommand" />
         <local:CommandSinkBinding Command="local:MainVM.RepoSearchCommit" />
-        <local:CommandSinkBinding Command="local:MainVM.RepoCreatebranch" />
+        <local:CommandSinkBinding Command="local:MainVM.RepoCreateBranch" />
+        <local:CommandSinkBinding Command="local:MainVM.RepoSelectBranch" />
         <local:CommandSinkBinding Command="local:MainVM.ChangePassCommand" />
         <local:CommandSinkBinding Command="local:MainVM.BookmarkCommand" />
     </Window.CommandBindings>
@@ -65,15 +66,22 @@
                                 <DataTemplate>
                                     <Expander ToolTip="{Binding Title}">
                                         <Expander.Header>
-                                            <StackPanel Orientation="Horizontal">
-                                                <Button Background="Transparent" Padding="2,0" ToolTip="Найти коммиты" BorderBrush="{x:Null}" Command="local:MainVM.RepoSearchCommit" CommandParameter="{Binding}">
-                                                    <Path Data="{StaticResource Icons.Data.SearchCommit}" Fill="Black" Stretch="Uniform" Width="15" Height="15"/>
-                                                </Button>
-                                                <Button Background="Transparent" Padding="2,0" ToolTip="Создать ветку" BorderBrush="{x:Null}" Command="local:MainVM.RepoCreatebranch" CommandParameter="{Binding}">
-                                                    <Path Data="{StaticResource Icons.Data.NewBranch}" Fill="Black" Stretch="Uniform" Width="15" Height="15"/>
-                                                </Button>
-                                                <ContentPresenter Margin="2" Content="{Binding}"/>
-                                            </StackPanel>
+                                            <Grid ClipToBounds="True">
+                                                <ContentPresenter Margin="22,2,2,2" Content="{Binding}"/>
+                                                <Border Background="White" HorizontalAlignment="Left" Style="{StaticResource HiddenStyle}" Margin="-40,0,0,0">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Button Background="Transparent" Padding="2,0" ToolTip="Найти коммиты" BorderBrush="{x:Null}" BorderThickness="0" Command="local:MainVM.RepoSearchCommit" CommandParameter="{Binding}">
+                                                            <Path Data="{StaticResource Icons.Data.SearchCommit}" Fill="Black" Stretch="Uniform" Width="16" Height="16"/>
+                                                        </Button>
+                                                        <Button Background="Transparent" Padding="2,0" ToolTip="Создать ветку" BorderBrush="{x:Null}" BorderThickness="0" Command="local:MainVM.RepoCreateBranch" CommandParameter="{Binding}">
+                                                            <Path Data="{StaticResource Icons.Data.NewBranch}" Fill="Black" Stretch="Uniform" Width="16" Height="16"/>
+                                                        </Button>
+                                                        <Button Background="Transparent" Padding="2,0" ToolTip="Выбрать ветку" BorderBrush="{x:Null}" BorderThickness="0" Command="local:MainVM.RepoSelectBranch" CommandParameter="{Binding}">
+                                                            <Path Data="{StaticResource Icons.Data.SelectBranch}" Fill="Black" Stretch="Uniform" Width="16" Height="16"/>
+                                                        </Button>
+                                                    </StackPanel>
+                                                </Border>
+                                            </Grid>
                                         </Expander.Header>
                                         <ScrollViewer Background="LightYellow" MaxHeight="250" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
                                             <TextBlock Margin="10" Text="{Binding Description}" TextWrapping="Wrap"/>
@@ -129,7 +137,7 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.Resources>
                 <DataTemplate DataType="{x:Type local:Bookmark}">
-                    <Button Background="Transparent" Command="local:MainVM.BookmarkCommand" CommandParameter="{Binding}" ToolTip="{Binding Name}" BorderBrush="{x:Null}" Style="{StaticResource HiddenButtonStyle}" BorderThickness="0" Width="32"  Margin="0,-55,0,0">
+                    <Button Background="Transparent" Command="local:MainVM.BookmarkCommand" CommandParameter="{Binding}" ToolTip="{Binding Name}" BorderBrush="{x:Null}" Style="{StaticResource HiddenStyle}" BorderThickness="0" Width="32"  Margin="0,-55,0,0">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border Background="{TemplateBinding Background}">
@@ -151,8 +159,8 @@
                 </DataTemplate>
             </ItemsControl.Resources>
         </ItemsControl>
-        <Button Command="local:MainVM.ChangePassCommand" Name="btnPassChange" Style="{StaticResource HiddenButtonStyle}" Visibility="{Binding IsVisible, ElementName=QuestionPanel, Converter={StaticResource BoolToVisI}}" Background="{x:Null}" ToolTip="Сменить пароль" BorderBrush="{x:Null}" Height="30" Width="30" VerticalAlignment="Top" Margin="0,-20,0,0">
-            <Path Fill="Black" Data="{StaticResource Icons.Data.ChangeKey}" Stretch="Uniform"/>
+        <Button Command="local:MainVM.ChangePassCommand" Name="btnPassChange" Style="{StaticResource HiddenStyle}" Visibility="{Binding IsVisible, ElementName=QuestionPanel, Converter={StaticResource BoolToVisI}}" Background="{x:Null}" ToolTip="Сменить пароль" BorderBrush="{x:Null}" Height="30" Width="30" VerticalAlignment="Top" Margin="0,-20,0,0">
+            <Path Fill="{StaticResource RequestItem.Background}" Data="{StaticResource Icons.Data.ChangeKey}" Stretch="Uniform"/>
         </Button>
         <ui:Question Name="QuestionPanel" DataContext="{Binding Question}" Visibility="{Binding Visibility}" Title="{Binding Title}" Messages="{Binding Messages}" Params="{Binding Fields}" OkCommand="{Binding Ok}" CancelCommand="{Binding Cancel}"/>
         <ui:Toast Name="ToastPanel" DataContext="{Binding Toast}" Text="{Binding Text}" Visibility="{Binding Visibility, Mode=OneWay}" Delay="{Binding Delay}"/>

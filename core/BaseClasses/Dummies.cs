@@ -40,6 +40,12 @@ namespace core.BaseClasses
 			return false;
 		}
 
+		public async Task<IBranch> GetBranch(IIssue issue, ParametersRequest parametersRequest, ShowText showText)
+		{
+			await Task.Yield();
+			return null;
+		}
+
 		public async Task<IList<ICommit>> GetCommitsAsync(IIssue issue, ShowText showText)
 		{
 			await Task.Yield();

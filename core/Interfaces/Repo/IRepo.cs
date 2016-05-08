@@ -11,5 +11,6 @@ namespace core.Interfaces.Repo
 		Task<IList<ICommit>> GetCommitsAsync(IBranch branch, ShowText showText);
 		Task<IList<ICommit>> GetCommitsAsync(IIssue issue, ShowText showText);
 		Task<bool> CreateBranch(IIssue issue, ParametersRequest parametersRequest, ShowText showText);
+		Task<IBranch> GetBranch(IIssue issue, ParametersRequest parametersRequest, ShowText showText);
 	}
 }

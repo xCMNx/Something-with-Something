@@ -18,7 +18,7 @@
             <conv:BoolToVisibility Inverted="True" x:Key="BoolToVisI"/>
             <conv:BoolInvertConverter x:Key="BoolInvert"/>
 
-            <Style TargetType="Button" x:Key="HiddenButtonStyle">
+            <Style TargetType="FrameworkElement" x:Key="HiddenStyle">
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
                         <Trigger.EnterActions>

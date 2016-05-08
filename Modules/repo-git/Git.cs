@@ -490,6 +490,11 @@ namespace repo_git
 			return null;
 		}
 
+		public async Task<IBranch> GetBranch(IIssue issue, ParametersRequest parametersRequest, ShowText showText)
+		{
+			return await FindBranch(issue, parametersRequest, showText);
+		}
+
 		public async Task<bool> CreateBranch(IIssue issue, ParametersRequest parametersRequest, ShowText showText)
 		{
 			var msgTitle = "Git: Создание ветки";
