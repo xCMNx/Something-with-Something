@@ -8,7 +8,7 @@
         xmlns:ui="clr-namespace:Ui.Controls;assembly=Ui"
         mc:Ignorable="d"
         local:CommandSinkBinding.CommandSink="{Binding}"
-        Title="MainWindow" Height="500" Width="800" WindowStartupLocation="CenterScreen">
+        Title="{Binding Title}" Height="500" Width="800" WindowStartupLocation="CenterScreen">
     <Window.DataContext>
         <local:MainVM/>
     </Window.DataContext>
@@ -16,6 +16,7 @@
         <local:CommandSinkBinding Command="local:MainVM.SelectPathCommand" />
         <local:CommandSinkBinding Command="local:MainVM.RepoSearchCommit" />
         <local:CommandSinkBinding Command="local:MainVM.RepoCreatebranch" />
+        <local:CommandSinkBinding Command="local:MainVM.ChangePassCommand" />
     </Window.CommandBindings>
 
     <Grid Name="MainWindowRoot">
@@ -47,7 +48,6 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <!--<TextBlock Grid.Column="0" Text="Проект:" Margin="5,2" VerticalAlignment="Center"/>-->
                         <Button Margin="0,2" Grid.Column="0" Background="Transparent" Command="{Binding ChangeTracker}" ToolTip="Настройки трекера">
                             <Path Margin="2" Data="{StaticResource Icons.Data.Settings}" Stretch="Uniform" Fill="Black" Height="15" Width="15"/>
                         </Button>
@@ -122,6 +122,31 @@
             </Grid>
             <ui:MetroProgressBar IsIndeterminate="{Binding MainWait}" EllipseDiameter="5" Foreground="Black"/>
         </Grid>
+        <Button Command="local:MainVM.ChangePassCommand" Visibility="{Binding IsVisible, ElementName=QuestionPanel, Converter={StaticResource BoolToVisI}}" Background="{x:Null}" ToolTip="Сменить пароль" BorderBrush="{x:Null}" Height="30" Width="30" VerticalAlignment="Top" Margin="0,-20,0,0">
+            <Path Fill="Black" Data="{StaticResource Icons.Data.ChangeKey}" Stretch="Uniform"/>
+            <Button.Style>
+                <Style TargetType="Button">
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ThicknessAnimation Duration="0:0:0.2" Storyboard.TargetProperty="Margin" To="0"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ThicknessAnimation Duration="0:0:1" Storyboard.TargetProperty="Margin"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Button.Style>
+        </Button>
         <ui:Question Name="QuestionPanel" DataContext="{Binding Question}" Visibility="{Binding Visibility}" Title="{Binding Title}" Messages="{Binding Messages}" Params="{Binding Fields}" OkCommand="{Binding Ok}" CancelCommand="{Binding Cancel}"/>
         <ui:Toast Name="ToastPanel" DataContext="{Binding Toast}" Text="{Binding Text}" Visibility="{Binding Visibility, Mode=OneWay}" Delay="{Binding Delay}"/>
     </Grid>

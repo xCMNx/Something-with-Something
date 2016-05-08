@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
 using core;
+using core.BaseClasses;
 using core.Interfaces;
 using core.Interfaces.Tracker;
 using Redmine.Net.Api;
@@ -52,6 +53,8 @@ namespace tracker_redmine
 
 		ObservableCollectionEx<IProject> _Projects = new ObservableCollectionEx<IProject>();
 		public IList<IProject> Projects => _Projects;
+
+		public string Name => "Redmine";
 
 		protected async Task<bool> AskAuthInfo(ParametersRequest parametersRequest, string message = null)
 		{
@@ -162,7 +165,7 @@ namespace tracker_redmine
 		{
 			try
 			{
-				var query = new NameValueCollection() { { "assigned_to_id", Manager.GetCurrentUser().Id.ToString() } };
+				var query = new NameValueCollection() { { "assigned_to_id", "me" } };
 				if (project != null)
 					query.Add("project_id", project.Identifier.ToString());
 				var trackers = Trackers;
@@ -171,7 +174,7 @@ namespace tracker_redmine
 				var stats = Statuses;
 				if (!string.IsNullOrWhiteSpace(stats))
 					query.Add("status_id", stats);
-				IList<Issue> issues = Manager.GetObjects<Issue>(query).OrderBy(i => i.Priority.Id).Reverse().ToArray();
+				IList<Issue> issues = Manager.GetObjects<Issue>(query).OrderByDescending(i => i.Priority.Id).ToArray();
 
 				return issues.Select(i => new RedmineIssue()
 				{

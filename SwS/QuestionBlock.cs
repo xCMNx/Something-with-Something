@@ -11,7 +11,7 @@ namespace SwS
 	/// <summary>
 	/// Логическая обертка для контрола Question
 	/// </summary>
-	public class QuestionBlock : core.BindableBase
+	public class QuestionBlock : BindableBase
 	{
 		public ObservableCollectionEx<object> Fields { get; protected set; } = new ObservableCollectionEx<object>();
 		public ObservableCollectionEx<string> Messages { get; protected set; } = new ObservableCollectionEx<string>();

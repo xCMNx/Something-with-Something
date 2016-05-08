@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 
-namespace core
+namespace core.BaseClasses
 {
 	public class BindableBase : INotifyPropertyChanged
 	{

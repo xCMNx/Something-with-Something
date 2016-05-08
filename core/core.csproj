@@ -39,6 +39,7 @@
     <Reference Include="System.configuration" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BaseClasses\Dummies.cs" />
     <Compile Include="BaseClasses\Repo\BranchBase.cs" />
     <Compile Include="BaseClasses\Repo\CommitBase.cs" />
     <Compile Include="Basic.cs" />

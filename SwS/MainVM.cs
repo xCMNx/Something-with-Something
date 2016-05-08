@@ -2,9 +2,12 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using core;
+using core.BaseClasses;
 using core.Interfaces;
 using core.Interfaces.Repo;
 using core.Interfaces.Tracker;
@@ -34,6 +37,8 @@ namespace SwS
 
 		static MainVM _instance;
 		public static MainVM Instance => _instance ?? (_instance = new MainVM());
+
+		public string Title => string.Format("{0} with {1}", Tracker?.Name, Repo?.Name); 
 
 		QuestionBlock _Question = new QuestionBlock();
 		public QuestionBlock Question => _Question;
@@ -95,6 +100,7 @@ namespace SwS
 		#endregion
 
 		public static readonly RoutedCommand SelectPathCommand = new RoutedCommand();
+		public static readonly RoutedCommand ChangePassCommand = new RoutedCommand();
 
 		public MainVM()
 		{
@@ -104,10 +110,53 @@ namespace SwS
 				param => param is TextBox,
 				SelectPathCommandExecute
 			);
+			RegisterCommand(
+				ChangePassCommand,
+				param => true,
+				param => ChangePass()
+			);
 			InitTrackerCommands();
 			InitRepoCommands();
-			UpdateTracker();
-			UpdateRepo();
+			init();
+		}
+
+		async Task<bool> CheckSettingsPass()
+		{
+			var dict = new IParametersRequestItem[] {
+				new ParametersRequestItem(){ Title = "Password", Value = new PasswordValueItem(string.Empty) }
+			};
+
+			while (await Question.ShowAsync(dict))
+				if (Helpers.SetEncryptionKey((dict[0].Value as StringValueItem).String))
+					return true;
+			return false;
+		}
+
+		void init()
+		{
+			Task.Factory.StartNew(async () =>
+			{
+				if(!await CheckSettingsPass())
+					Helpers.Post(Application.Current.Shutdown);
+				initTracker();
+				initRepo();
+			});
+		}
+
+		public void ChangePass()
+		{
+			Task.Factory.StartNew(async () =>
+			{
+				if (await CheckSettingsPass())
+				{
+					var dict = new IParametersRequestItem[] {
+						new ParametersRequestItem(){ Title = "New password", Value = new PasswordValueItem(string.Empty) }
+					};
+
+					if (await Question.ShowAsync(dict))
+						Helpers.ChangeKey((dict[0].Value as StringValueItem).String);
+				}
+			});
 		}
 
 		void SelectPathCommandExecute(object parameter)
@@ -123,7 +172,7 @@ namespace SwS
 
 		#region Repo
 
-		IRepo Repo = new Git();
+		IRepo Repo = new DummyRepo();
 
 		public IList<ICommit> Commits { get; private set; } = new ICommit[0];
 		public IList<ICommit> _commits = new ICommit[0];
@@ -163,6 +212,13 @@ namespace SwS
 				param => true,
 				Createbranch
 			);
+		}
+
+		void initRepo()
+		{
+			Repo = new Git();
+			UpdateRepo();
+			Helpers.Post(() => NotifyPropertyChanged(nameof(Title)));
 		}
 
 		public async void ConfigurateRepo()
@@ -253,7 +309,7 @@ namespace SwS
 
 		#region Tracker
 
-		ITracker Tracker = new Redmine();
+		ITracker Tracker = new DummyTracker();
 		public IList<IProject> Projects => Tracker.Projects;
 		public IList<IIssue> Issues { get; private set; }
 
@@ -267,6 +323,13 @@ namespace SwS
 				NotifyPropertyChanged(nameof(Project));
 				UpdateIssues();
 			}
+		}
+
+		void initTracker()
+		{
+			Tracker = new Redmine();
+			UpdateTracker();
+			Helpers.Post(()=>NotifyPropertyChanged(nameof(Title)));
 		}
 
 		public void UpdateTracker()

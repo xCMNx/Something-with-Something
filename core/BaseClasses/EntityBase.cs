@@ -1,6 +1,6 @@
 ﻿using core.Interfaces;
 
-namespace core
+namespace core.BaseClasses
 {
 	public class EntityBase : IEntity
 	{

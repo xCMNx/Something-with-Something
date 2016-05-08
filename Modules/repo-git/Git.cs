@@ -5,11 +5,11 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using core;
+using core.BaseClasses;
 using core.Interfaces;
 using core.Interfaces.Repo;
 using core.Interfaces.Tracker;
 using LibGit2Sharp;
-using Palmmedia.GitHistory.Core;
 using Palmmedia.GitHistory.Core.Model;
 
 namespace repo_git
@@ -18,7 +18,9 @@ namespace repo_git
 	{
 		protected const string PREFIX = "GIT_";
 		protected const string USER = PREFIX + "USER";
+		protected const string RUSER = USER + "_[{0}]";
 		protected const string PASS = PREFIX + "PASS";
+		protected const string RPASS = PASS + "_[{0}]";
 		protected const string URL = PREFIX + "URL";
 		protected const string MASTER = PREFIX + "MASTER_BRUNCH";
 		protected const string COMMIT_MASK = PREFIX + "COMMIT_MASK";
@@ -42,6 +44,12 @@ namespace repo_git
 		{
 			get { return Helpers.ConfigRead(PASS, string.Empty, true); }
 			set { Helpers.ConfigWrite(PASS, value); }
+		}
+
+		public KeyValuePair<string, string> this[string repoUrl]
+		{
+			get { return new KeyValuePair<string, string>(GetUser(repoUrl), GetPass(repoUrl)); }
+			set { SetUserPass(repoUrl, value.Key, value.Value); }
 		}
 
 		public string MasterIdentifier
@@ -88,6 +96,34 @@ namespace repo_git
 
 		public IList<IBranch> Branches { get; private set; } = new IBranch[0];
 
+		public string Name => "Git";
+
+		static string UserCFGPath(string repoUrl)
+		{
+			return string.Format(RUSER, repoUrl);
+		}
+
+		static string PassCFGPath(string repoUrl)
+		{
+			return string.Format(RPASS, repoUrl);
+		}
+
+		protected string GetUser(string repoUrl)
+		{
+			return Helpers.ConfigRead(UserCFGPath(repoUrl), null, false);
+		}
+
+		protected string GetPass(string repoUrl)
+		{
+			return Helpers.ConfigRead(PassCFGPath(repoUrl), null, false);
+		}
+
+		protected void SetUserPass(string repoUrl, string user, string pass)
+		{
+			Helpers.ConfigWrite(UserCFGPath(repoUrl), user);
+			Helpers.ConfigWrite(PassCFGPath(repoUrl), pass);
+		}
+
 		protected async Task<bool> AskAuthInfo(ParametersRequest parametersRequest, string message = null)
 		{
 			var dict = new IParametersRequestItem[] {
@@ -107,6 +143,21 @@ namespace repo_git
 			return false;
 		}
 
+		protected async Task<bool> AskRepoAuthInfo(string repoUrl, ParametersRequest parametersRequest)
+		{
+			var dict = new IParametersRequestItem[] {
+				new ParametersRequestItem(){ Title = "User", Value = new StringValueItem(GetUser(repoUrl) ?? User) }
+				,new ParametersRequestItem(){ Title = "Password", Value = new PasswordValueItem(GetPass(repoUrl) ?? Password) }
+			};
+
+			if (await parametersRequest(dict, repoUrl))
+			{
+				SetUserPass(repoUrl, (dict[0].Value as StringValueItem).String, (dict[1].Value as StringValueItem).String);
+				return true;
+			}
+			return false;
+		}
+
 		protected void UpdateBranches(Repository repo)
 		{
 			Branches = repo.Branches.Select(b => new GitBranch()
@@ -115,6 +166,40 @@ namespace repo_git
 				Title = System.IO.Path.GetFileName(b.FriendlyName),
 				Identifier = b.CanonicalName
 			}).ToArray();
+		}
+
+		public async Task FetchAll(Repository repo, ParametersRequest parametersRequest, ShowText showText)
+		{
+			foreach (Remote remote in repo.Network.Remotes)
+			{
+				FetchOptions options = new FetchOptions();
+				UsernamePasswordCredentials creds = null;
+				try
+				{
+					options.CredentialsProvider = (url, usernameFromUrl, types) =>
+						{
+							if (creds == null)
+								creds = new UsernamePasswordCredentials() { Username = GetUser(remote.Url) ?? User, Password = GetPass(remote.Url) ?? Password };
+							else
+							{
+								var r = AskRepoAuthInfo(url, parametersRequest);
+								r.Wait();
+								if(!r.Result)
+									throw new RepoAuthException("Authentication cancelled");
+								creds.Username = GetUser(remote.Url);
+								creds.Password = GetPass(remote.Url);
+							}
+							return creds;
+						};
+					await Task.Factory.StartNew(() => repo.Network.Fetch(remote, options));
+				}
+				catch (Exception e)
+				{
+					var msg = string.Format("{0}:\r\n{1}", remote.Url, e.Message);
+					await showText(msg);
+					Helpers.ConsoleWrite(msg, ConsoleColor.Yellow);
+				}
+			}
 		}
 
 		protected void UpdateBranches()
@@ -132,7 +217,11 @@ namespace repo_git
 				{
 					try
 					{
-						UpdateBranches();
+						using (var repo = new Repository(Path))
+						{
+							await FetchAll(repo, parametersRequest, showText);
+							UpdateBranches();
+						}
 						var mName = MasterIdentifier;
 						Master = string.IsNullOrWhiteSpace(mName) ? null : Branches.FirstOrDefault(b => Equals(b.Identifier, mName));
 						return true;
@@ -169,7 +258,7 @@ namespace repo_git
 					{
 						using (var repo = new Repository(Path))
 						{
-							var mbr = repo.Branches.FirstOrDefault(b => Equals(b.CanonicalName, Master.Identifier)) ?? repo.Head;
+							var mbr = Master == null ? repo.Head : repo.Branches.FirstOrDefault(b => Equals(b.CanonicalName, Master.Identifier)) ?? repo.Head;
 							//if (mbr == null)
 							//	showText(string.Format("Ветка {0} не найдена, обновите список веток.", Master));
 							//else

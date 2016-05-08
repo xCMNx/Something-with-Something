@@ -5,6 +5,7 @@ using System.Configuration;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 
@@ -16,7 +17,7 @@ namespace core
 		public static CancellationTokenSource mainCTS = new CancellationTokenSource();
 
 		public static string ProgramPath { get; private set; }
-		public static string SettingsPath { get; private set; }
+		public static string EncryptionKey { get; set; }
 
 		static Helpers()
 		{
@@ -26,8 +27,6 @@ namespace core
 			var fn = config.FilePath.ToLower();
 			if (fn.Contains(".vshost."))
 				config = ConfigurationManager.OpenExeConfiguration(fn.Replace(".vshost.", ".").Replace(".config", null));
-			Encoding = Encoding.GetEncoding(ReadFromConfig(ENCODING, Default_Encoding));
-			SettingsPath = ReadFromConfig("SettingsPath", System.IO.Path.Combine(ProgramPath, @"Settings"));
 		}
 
 		public static T SendNew<T>(this SynchronizationContext ctx, Func<T> NewMethod) where T : class
@@ -124,10 +123,6 @@ namespace core
 		#endregion
 
 		#region Encoding
-		public static string Default_Encoding = "windows-1251";
-		public const string ENCODING = "ENCODING";
-		public static Encoding Encoding;
-
 		public static Encoding GetEncoding(string filename, Encoding def)
 		{
 			// Read the BOM
@@ -212,19 +207,65 @@ namespace core
 
 		#region Config
 		static Configuration config;
+		static SemaphoreSlim ConfigSema = new SemaphoreSlim(1);
+
+		public static bool SetEncryptionKey(string encryptionKey)
+		{
+			ConfigSema.Wait();
+			try
+			{
+				var r = config.AppSettings.Settings["state"];
+				bool b;
+				if (r != null && !bool.TryParse(Decrypt(r.Value, encryptionKey), out b))
+					return false;
+				EncryptionKey = string.IsNullOrWhiteSpace(encryptionKey) ? "defaultkey" : encryptionKey;
+				InnerWriteToConfig("state", true.ToString());
+				return true;
+			}
+			finally
+			{
+				ConfigSema.Release();
+			}
+		}
+
+		public static void ChangeKey(string encryptionKey)
+		{
+			ConfigSema.Wait();
+			try
+			{
+				foreach (KeyValueConfigurationElement s in config.AppSettings.Settings)
+					s.Value = Encrypt(Decrypt(s.Value, EncryptionKey), encryptionKey);
+				config.Save(ConfigurationSaveMode.Minimal);
+			}
+			finally
+			{
+				ConfigSema.Release();
+			}
+		}
+
+		static void InnerWriteToConfig(string Key, string Value)
+		{
+			var value = Encrypt(Value, EncryptionKey);
+			var k = config.AppSettings.Settings[Key];
+			if (k == null)
+				config.AppSettings.Settings.Add(Key, value);
+			else
+				k.Value = value;
+			config.Save(ConfigurationSaveMode.Minimal);
+		}
 
 		public static void WriteToConfig(string Key, string Value)
 		{
 			try
 			{
-				lock (config)
+				ConfigSema.Wait();
+				try
 				{
-					var k = config.AppSettings.Settings[Key];
-					if (k == null)
-						config.AppSettings.Settings.Add(Key, Value);
-					else
-						k.Value = Value;
-					config.Save(ConfigurationSaveMode.Minimal);
+					InnerWriteToConfig(Key, Value);
+				}
+				finally
+				{
+					ConfigSema.Release();
 				}
 			}
 			catch (Exception e)
@@ -240,16 +281,21 @@ namespace core
 
 		public static string ReadFromConfig(string Key, string Default = null, bool CreateRecord = false)
 		{
-			lock (config)
+			ConfigSema.Wait();
+			try
 			{
 				var r = config.AppSettings.Settings[Key];
 				if (r == null)
 				{
 					if (CreateRecord)
-						WriteToConfig(Key, Default);
+						InnerWriteToConfig(Key, Default);
 					return Default;
 				}
-				return r.Value;
+				return Decrypt(r.Value, EncryptionKey);
+			}
+			finally
+			{
+				ConfigSema.Release();
 			}
 		}
 
@@ -280,6 +326,163 @@ namespace core
 			if (byte.TryParse(ReadFromConfig(Key, null, CreateRecord), out val))
 				return val;
 			return Default;
+		}
+		#endregion
+
+		#region Encrypting
+
+		public static string Encrypt(string cipherText, string sharedSecret)
+		{
+			if (string.IsNullOrEmpty(cipherText) || string.IsNullOrEmpty(sharedSecret))
+				return cipherText;
+			return EncryptStringAES(cipherText, sharedSecret);
+		}
+
+		public static string Decrypt(string cipherText, string sharedSecret)
+		{
+			if (string.IsNullOrEmpty(cipherText) || string.IsNullOrEmpty(sharedSecret))
+				return cipherText;
+			try
+			{
+				return DecryptStringAES(cipherText, sharedSecret);
+			}
+			catch
+			{
+				return cipherText;
+			}
+		}
+
+		private static byte[] _salt = Encoding.ASCII.GetBytes("o9965kbM7c5");
+
+		/// <summary>
+		/// Encrypt the given string using AES.  The string can be decrypted using 
+		/// DecryptStringAES().  The sharedSecret parameters must match.
+		/// </summary>
+		/// <param name="plainText">The text to encrypt.</param>
+		/// <param name="sharedSecret">A password used to generate a key for encryption.</param>
+		public static string EncryptStringAES(string plainText, string sharedSecret)
+		{
+			if (string.IsNullOrEmpty(plainText))
+				throw new ArgumentNullException("plainText");
+			if (string.IsNullOrEmpty(sharedSecret))
+				throw new ArgumentNullException("sharedSecret");
+
+			string outStr = null;                       // Encrypted string to return
+			RijndaelManaged aesAlg = null;              // RijndaelManaged object used to encrypt the data.
+
+			try
+			{
+				// generate the key from the shared secret and the salt
+				Rfc2898DeriveBytes key = new Rfc2898DeriveBytes(sharedSecret, _salt);
+
+				// Create a RijndaelManaged object
+				aesAlg = new RijndaelManaged();
+				aesAlg.Key = key.GetBytes(aesAlg.KeySize / 8);
+
+				// Create a decryptor to perform the stream transform.
+				ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
+
+				// Create the streams used for encryption.
+				using (MemoryStream msEncrypt = new MemoryStream())
+				{
+					// prepend the IV
+					msEncrypt.Write(BitConverter.GetBytes(aesAlg.IV.Length), 0, sizeof(int));
+					msEncrypt.Write(aesAlg.IV, 0, aesAlg.IV.Length);
+					using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+					{
+						using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
+						{
+							//Write all data to the stream.
+							swEncrypt.Write(plainText);
+						}
+					}
+					outStr = Convert.ToBase64String(msEncrypt.ToArray());
+				}
+			}
+			finally
+			{
+				// Clear the RijndaelManaged object.
+				if (aesAlg != null)
+					aesAlg.Clear();
+			}
+
+			// Return the encrypted bytes from the memory stream.
+			return outStr;
+		}
+
+		/// <summary>
+		/// Decrypt the given string.  Assumes the string was encrypted using 
+		/// EncryptStringAES(), using an identical sharedSecret.
+		/// </summary>
+		/// <param name="cipherText">The text to decrypt.</param>
+		/// <param name="sharedSecret">A password used to generate a key for decryption.</param>
+		public static string DecryptStringAES(string cipherText, string sharedSecret)
+		{
+			if (string.IsNullOrEmpty(cipherText))
+				throw new ArgumentNullException("cipherText");
+			if (string.IsNullOrEmpty(sharedSecret))
+				throw new ArgumentNullException("sharedSecret");
+
+			// Declare the RijndaelManaged object
+			// used to decrypt the data.
+			RijndaelManaged aesAlg = null;
+
+			// Declare the string used to hold
+			// the decrypted text.
+			string plaintext = null;
+
+			try
+			{
+				// generate the key from the shared secret and the salt
+				Rfc2898DeriveBytes key = new Rfc2898DeriveBytes(sharedSecret, _salt);
+
+				// Create the streams used for decryption.                
+				byte[] bytes = Convert.FromBase64String(cipherText);
+				using (MemoryStream msDecrypt = new MemoryStream(bytes))
+				{
+					// Create a RijndaelManaged object
+					// with the specified key and IV.
+					aesAlg = new RijndaelManaged();
+					aesAlg.Key = key.GetBytes(aesAlg.KeySize / 8);
+					// Get the initialization vector from the encrypted stream
+					aesAlg.IV = ReadByteArray(msDecrypt);
+					// Create a decrytor to perform the stream transform.
+					ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
+					using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+					{
+						using (StreamReader srDecrypt = new StreamReader(csDecrypt))
+
+							// Read the decrypted bytes from the decrypting stream
+							// and place them in a string.
+							plaintext = srDecrypt.ReadToEnd();
+					}
+				}
+			}
+			finally
+			{
+				// Clear the RijndaelManaged object.
+				if (aesAlg != null)
+					aesAlg.Clear();
+			}
+
+			return plaintext;
+		}
+
+		private static byte[] ReadByteArray(Stream s)
+		{
+			byte[] rawLength = new byte[sizeof(int)];
+			if (s.Read(rawLength, 0, rawLength.Length) != rawLength.Length)
+			{
+				throw new SystemException("Stream did not contain properly formatted byte array");
+			}
+
+			byte[] buffer = new byte[BitConverter.ToInt32(rawLength, 0)];
+			if (s.Read(buffer, 0, buffer.Length) != buffer.Length)
+			{
+				throw new SystemException("Did not read byte array properly");
+			}
+
+			return buffer;
 		}
 		#endregion
 

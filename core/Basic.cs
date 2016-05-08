@@ -128,6 +128,16 @@ namespace core
 		public PathValueItem(string path) : base(path) { }
 	}
 
+	public class RepoAuthException : Exception
+	{
+		public RepoAuthException(string message) : base(message) { }
+	}
+
+	public class TrackerAuthException : Exception
+	{
+		public TrackerAuthException(string message) : base(message) { }
+	}
+
 	public delegate Task<bool> ParametersRequest(IList<IParametersRequestItem> requestFields, string title = null, params string[] messages);
 	public delegate Task ShowText(string text, int delay = -1);
 
