@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace core
@@ -147,6 +148,16 @@ namespace core
 		}
 		#endregion
 
+		static Regex splitter = new Regex(@"\w+");
+		public static string[] Words(this string str)
+		{
+			var matches = splitter.Matches(str);
+			var res = new string[matches.Count];
+			int i = 0;
+			foreach (Match m in matches)
+				res[i++] = m.Value;
+			return res;
+		}
 
 		#region Reflection
 		public static Type[] getModules(string InterfaceName, IEnumerable<Assembly> assemblies = null)
@@ -216,9 +227,10 @@ namespace core
 			{
 				var r = config.AppSettings.Settings["state"];
 				bool b;
+				encryptionKey = string.IsNullOrWhiteSpace(encryptionKey) ? "defaultkey" : encryptionKey;
 				if (r != null && !bool.TryParse(Decrypt(r.Value, encryptionKey), out b))
 					return false;
-				EncryptionKey = string.IsNullOrWhiteSpace(encryptionKey) ? "defaultkey" : encryptionKey;
+				EncryptionKey = encryptionKey;
 				InnerWriteToConfig("state", true.ToString());
 				return true;
 			}

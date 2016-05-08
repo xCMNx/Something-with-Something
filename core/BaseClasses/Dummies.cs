@@ -10,13 +10,15 @@ namespace core.BaseClasses
 {
 	public class DummyModule : IModule
 	{
+		public string ConfigName { get; set; }
 		public string Name => "Something";
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
-		public Task<bool> UpdateAsync(ParametersRequest parametersRequest, ShowText showText)
+		public async Task<bool> UpdateAsync(ParametersRequest parametersRequest, ShowText showText)
 		{
-			throw new NotImplementedException();
+			await Task.Yield();
+			return false;
 		}
 	}
 	public class DummyTracker : DummyModule, ITracker
@@ -32,19 +34,22 @@ namespace core.BaseClasses
 	{
 		public IList<IBranch> Branches => new IBranch[0];
 		public IBranch Master => null;
-		public Task<bool> CreateBranch(IIssue issue, ParametersRequest parametersRequest, ShowText showText)
+		public async Task<bool> CreateBranch(IIssue issue, ParametersRequest parametersRequest, ShowText showText)
 		{
-			throw new NotImplementedException();
+			await Task.Yield();
+			return false;
 		}
 
-		public Task<IList<ICommit>> GetCommitsAsync(IIssue issue, ShowText showText)
+		public async Task<IList<ICommit>> GetCommitsAsync(IIssue issue, ShowText showText)
 		{
-			throw new NotImplementedException();
+			await Task.Yield();
+			return new ICommit[0];
 		}
 
-		public Task<IList<ICommit>> GetCommitsAsync(IBranch branch, ShowText showText)
+		public async Task<IList<ICommit>> GetCommitsAsync(IBranch branch, ShowText showText)
 		{
-			throw new NotImplementedException();
+			await Task.Yield();
+			return new ICommit[0];
 		}
 	}
 }

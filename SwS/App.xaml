@@ -18,6 +18,27 @@
             <conv:BoolToVisibility Inverted="True" x:Key="BoolToVisI"/>
             <conv:BoolInvertConverter x:Key="BoolInvert"/>
 
+            <Style TargetType="Button" x:Key="HiddenButtonStyle">
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Trigger.EnterActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <ThicknessAnimation Duration="0:0:0.2" Storyboard.TargetProperty="Margin" To="0"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.EnterActions>
+                        <Trigger.ExitActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <ThicknessAnimation Duration="0:0:1" Storyboard.TargetProperty="Margin"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.ExitActions>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
             <SolidColorBrush Color="Black" Opacity="0.5" x:Key="RequestItem.Background"/>
 
             <SolidColorBrush Color="White" x:Key="RequestItem.Foreground"/>
@@ -82,6 +103,12 @@
             <DataTemplate DataType="{x:Type core:HeaderRequestItem}">
                 <Border BorderBrush="{StaticResource RequestItem.Foreground}" BorderThickness="0,0,0,1" Margin="0,2,0,0">
                     <TextBlock Margin="4,0" FontWeight="Bold" Text="{Binding Title}" ToolTip="{Binding Hint}" Foreground="{StaticResource RequestItem.Foreground}"/>
+                </Border>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type core:TextRequestItem}">
+                <Border BorderBrush="{StaticResource RequestItem.Foreground}">
+                    <TextBlock Margin="4,0" Text="{Binding Title}" Foreground="{StaticResource RequestItem.Foreground}"/>
                 </Border>
             </DataTemplate>
 

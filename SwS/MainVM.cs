@@ -46,6 +46,14 @@ namespace SwS
 		ToastBlock _Toast = new ToastBlock();
 		public ToastBlock Toast => _Toast;
 
+		string ConfigName
+		{
+			get { return Helpers.ConfigRead("LastConfig", string.Empty); }
+			set { Helpers.ConfigWrite("LastConfig", value); }
+		}
+
+		public ObservableCollectionEx<Bookmark> Bookmarks { get; } = new ObservableCollectionEx<Bookmark>() { new Bookmark("+") };
+
 		#region Wait state properties
 		int _MainWaitCnt = 0;
 		object _MainWaitLock = new object();
@@ -101,6 +109,7 @@ namespace SwS
 
 		public static readonly RoutedCommand SelectPathCommand = new RoutedCommand();
 		public static readonly RoutedCommand ChangePassCommand = new RoutedCommand();
+		public static readonly RoutedCommand BookmarkCommand = new RoutedCommand();
 
 		public MainVM()
 		{
@@ -114,6 +123,11 @@ namespace SwS
 				ChangePassCommand,
 				param => true,
 				param => ChangePass()
+			);
+			RegisterCommand(
+				BookmarkCommand,
+				param => true,
+				SetBookmark
 			);
 			InitTrackerCommands();
 			InitRepoCommands();
@@ -136,11 +150,70 @@ namespace SwS
 		{
 			Task.Factory.StartNew(async () =>
 			{
-				if(!await CheckSettingsPass())
+				if (!await CheckSettingsPass())
 					Helpers.Post(Application.Current.Shutdown);
+				else 
+				{
+					LoadBookmarks();
+					if (!string.IsNullOrWhiteSpace(ConfigName))
+						SetConfig(Bookmarks.FirstOrDefault(b => b.Name == ConfigName));
+				}
+			});
+		}
+
+		void LoadBookmarks()
+		{
+			var bms = Helpers.ConfigRead("Bookmarks", string.Empty).Split(new char[] { '\t' }, StringSplitOptions.RemoveEmptyEntries);
+			Helpers.Post(()=> Bookmarks.Reset(bms.Select(n=> new Bookmark(n))));
+		}
+
+		void SaveBookmarks()
+		{
+			Helpers.ConfigWrite("Bookmarks", string.Join("\t", Bookmarks.Select(b => b.Name).ToArray()));
+		}
+
+		void SetBookmark(object param)
+		{
+			var bm = param as Bookmark;
+			if (bm.Name == "+")
+				NewBookmark();
+			else
+				SetConfig(bm);
+		}
+
+		async Task NewBookmark()
+		{
+			var dict = new IParametersRequestItem[] {
+					new ParametersRequestItem(){ Title = "Название", Value = new StringValueItem(string.Empty) }
+				};
+
+			var msg = string.Empty;
+			while (await Question.ShowAsync(dict, "Новая закладка", msg))
+			{
+				var name = (dict[0].Value as StringValueItem).String.Replace('\t', ' ').Trim();
+				if (string.IsNullOrWhiteSpace(name))
+					msg = "Название не может быть пустым";
+				else if (Bookmarks.FirstOrDefault(b => b.Name.Equals(name)) != null)
+					msg = "Закладка с таким названием уже существует";
+				else
+				{
+					var bm = new Bookmark(name);
+					Bookmarks.Insert(Bookmarks.Count - 1, bm);
+					SetConfig(bm);
+					SaveBookmarks();
+					return;
+				}
+			}
+		}
+
+		void SetConfig(Bookmark bookmark)
+		{
+			if (bookmark != null)
+			{
+				ConfigName = bookmark.Name;
 				initTracker();
 				initRepo();
-			});
+			}
 		}
 
 		public void ChangePass()
@@ -217,6 +290,7 @@ namespace SwS
 		void initRepo()
 		{
 			Repo = new Git();
+			Repo.ConfigName = ConfigName;
 			UpdateRepo();
 			Helpers.Post(() => NotifyPropertyChanged(nameof(Title)));
 		}
@@ -321,23 +395,31 @@ namespace SwS
 			{
 				_Project = value;
 				NotifyPropertyChanged(nameof(Project));
+				Helpers.ConfigWrite(string.Format("LastProjectId[{0}]", ConfigName), value?.Identifier);
 				UpdateIssues();
 			}
 		}
 
-		void initTracker()
+		async void initTracker()
 		{
 			Tracker = new Redmine();
-			UpdateTracker();
-			Helpers.Post(()=>NotifyPropertyChanged(nameof(Title)));
+			Tracker.ConfigName = ConfigName;
+			await UpdateTracker();
+			var lpiId = Helpers.ReadFromConfig(string.Format("LastProjectId[{0}]", ConfigName), null);
+			Helpers.Post(()=>
+			{
+				NotifyPropertyChanged(nameof(Title));
+				Project = Projects.FirstOrDefault(p => Equals(p.Identifier.ToString(), lpiId));
+			});
 		}
 
-		public void UpdateTracker()
+		public async Task UpdateTracker()
 		{
 			BeginWait();
 			try
 			{
-				Tracker.UpdateAsync(Question.ShowAsync, Toast.ShowAsync);
+				await Tracker.UpdateAsync(Question.ShowAsync, Toast.ShowAsync);
+				NotifyPropertyChanged(nameof(Projects));
 			}
 			finally
 			{

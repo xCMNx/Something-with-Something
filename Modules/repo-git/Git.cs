@@ -18,32 +18,35 @@ namespace repo_git
 	{
 		protected const string PREFIX = "GIT_";
 		protected const string USER = PREFIX + "USER";
-		protected const string RUSER = USER + "_[{0}]";
+		protected const string RUSER = USER + "[{0}]";
 		protected const string PASS = PREFIX + "PASS";
-		protected const string RPASS = PASS + "_[{0}]";
-		protected const string URL = PREFIX + "URL";
-		protected const string MASTER = PREFIX + "MASTER_BRUNCH";
-		protected const string COMMIT_MASK = PREFIX + "COMMIT_MASK";
-		protected const string COMMIT_SEARCH_MASK = PREFIX + "COMMIT_SEARCH_MASK";
-		protected const string COMMIT_START = PREFIX + "COMMIT_START_FLAG";
-		protected const string BRANCH_TEMPLATE = PREFIX + "BRANCH_TEMPLATE";
+		protected const string RPASS = PASS + "[{0}]";
+		protected const string URL = PREFIX + "URL[{0}]";
+		protected const string MASTER = PREFIX + "MASTER_BRUNCH[{0}]";
+		protected const string COMMIT_MASK = PREFIX + "COMMIT_MASK[{0}]";
+		protected const string COMMIT_SEARCH_MASK = PREFIX + "COMMIT_SEARCH_MASK[{0}]";
+		protected const string COMMIT_START = PREFIX + "COMMIT_START_FLAG[{0}]";
+		protected const string BRANCH_TEMPLATE = PREFIX + "BRANCH_TEMPLATE[{0}]";
+		protected const string BRANCH_TEMPLATE_TITLE = PREFIX + "BRANCH_TEMPLATE_TITLE[{0}]";
+
+		public string ConfigName { get; set; }
 
 		public string Path
 		{
-			get { return Helpers.ConfigRead(URL, string.Empty, true); }
-			set { Helpers.ConfigWrite(URL, value); }
+			get { return Helpers.ConfigRead(string.Format(URL, ConfigName), string.Empty, true); }
+			set { Helpers.ConfigWrite(string.Format(URL, ConfigName), value); }
 		}
 
 		public string User
 		{
-			get { return Helpers.ConfigRead(USER, string.Empty, true); }
-			set { Helpers.ConfigWrite(USER, value); }
+			get { return Helpers.ConfigRead(string.Format(USER, ConfigName), string.Empty, true); }
+			set { Helpers.ConfigWrite(string.Format(USER, ConfigName), value); }
 		}
 
 		public string Password
 		{
-			get { return Helpers.ConfigRead(PASS, string.Empty, true); }
-			set { Helpers.ConfigWrite(PASS, value); }
+			get { return Helpers.ConfigRead(string.Format(PASS, ConfigName), string.Empty, true); }
+			set { Helpers.ConfigWrite(string.Format(PASS, ConfigName), value); }
 		}
 
 		public KeyValuePair<string, string> this[string repoUrl]
@@ -54,32 +57,38 @@ namespace repo_git
 
 		public string MasterIdentifier
 		{
-			get { return Helpers.ConfigRead(MASTER, string.Empty, true); }
-			set { Helpers.ConfigWrite(MASTER, value); }
+			get { return Helpers.ConfigRead(string.Format(MASTER, ConfigName), string.Empty, true); }
+			set { Helpers.ConfigWrite(string.Format(MASTER, ConfigName), value); }
 		}
 
 		public string CommitMask
 		{
-			get { return Helpers.ConfigRead(COMMIT_MASK, "refs #%Identifier", true); }
-			set { Helpers.ConfigWrite(COMMIT_MASK, value); }
+			get { return Helpers.ConfigRead(string.Format(COMMIT_MASK, ConfigName), "refs #%Identifier", true); }
+			set { Helpers.ConfigWrite(string.Format(COMMIT_MASK, ConfigName), value); }
 		}
 
 		public string CommitSearchMask
 		{
-			get { return Helpers.ConfigRead(COMMIT_SEARCH_MASK, "(?im)^refs (#|)%Identifier", true); }
-			set { Helpers.ConfigWrite(COMMIT_SEARCH_MASK, value); }
+			get { return Helpers.ConfigRead(string.Format(COMMIT_SEARCH_MASK, ConfigName), "(?im)^refs (#|)%Identifier", true); }
+			set { Helpers.ConfigWrite(string.Format(COMMIT_SEARCH_MASK, ConfigName), value); }
 		}
 
 		public bool CommitStart
 		{
-			get { return Helpers.ConfigRead(COMMIT_START, true, true); }
-			set { Helpers.ConfigWrite(COMMIT_START, value); }
+			get { return Helpers.ConfigRead(string.Format(COMMIT_START, ConfigName), true, true); }
+			set { Helpers.ConfigWrite(string.Format(COMMIT_START, ConfigName), value); }
 		}
 
 		public string BranchTemplate
 		{
-			get { return Helpers.ConfigRead(BRANCH_TEMPLATE, "refs %IDENTIFIER - %TITLE", true); }
-			set { Helpers.ConfigWrite(BRANCH_TEMPLATE, value); }
+			get { return Helpers.ConfigRead(string.Format(BRANCH_TEMPLATE, ConfigName), "refs %IDENTIFIER - ", true); }
+			set { Helpers.ConfigWrite(string.Format(BRANCH_TEMPLATE, ConfigName), value); }
+		}
+
+		public string BranchTemplateTitle
+		{
+			get { return Helpers.ConfigRead(string.Format(BRANCH_TEMPLATE_TITLE, ConfigName), "%TITLE", true); }
+			set { Helpers.ConfigWrite(string.Format(BRANCH_TEMPLATE_TITLE, ConfigName), value); }
 		}
 
 		IBranch _Master = null;
@@ -208,22 +217,35 @@ namespace repo_git
 				UpdateBranches(repo);
 		}
 
+		async Task TryUpdate(ParametersRequest parametersRequest, ShowText showText)
+		{
+			using (var repo = new Repository(Path))
+			{
+				await FetchAll(repo, parametersRequest, showText);
+				UpdateBranches();
+			}
+			var mName = MasterIdentifier;
+			Master = string.IsNullOrWhiteSpace(mName) ? null : Branches.FirstOrDefault(b => Equals(b.Identifier, mName));
+		}
+
 		public async Task<bool> UpdateAsync(ParametersRequest parametersRequest, ShowText showText)
 		{
 			try
 			{
+				try
+				{
+					await TryUpdate(parametersRequest, showText);
+					return true;
+				}
+				catch
+				{
+				}
 				string message = null;
 				while (await AskAuthInfo(parametersRequest, message))
 				{
 					try
 					{
-						using (var repo = new Repository(Path))
-						{
-							await FetchAll(repo, parametersRequest, showText);
-							UpdateBranches();
-						}
-						var mName = MasterIdentifier;
-						Master = string.IsNullOrWhiteSpace(mName) ? null : Branches.FirstOrDefault(b => Equals(b.Identifier, mName));
+						await TryUpdate(parametersRequest, showText);
 						return true;
 					}
 					catch (Exception e)
@@ -306,13 +328,20 @@ namespace repo_git
 					Title = "Основная ветка",
 					Value = new ComboListValueItem(Branches.OfType<GitBranch>().ToArray(), Master)
 				}
+				,new HeaderRequestItem() { Title = "Ветки" }
 				,new ParametersRequestItem(){
-					Title = "Шаблон создания веток",
+					Title = "Заголовок",
 					Value = new StringValueItem(BranchTemplate),
-					Hint = "Например \"refs %Identifier - %Title\" где %Identifier это идентификатор задачи"
+					Hint = "Например \"refs %Identifier - \" где %Identifier это идентификатор задачи"
 				}
 				,new ParametersRequestItem(){
-					Title = "Шаблон поиска коммита",
+					Title = "Название",
+					Value = new StringValueItem(BranchTemplateTitle),
+					Hint = "Например \"%Title\" где %Title это заголовок задачи"
+				}
+				,new HeaderRequestItem() { Title = "Коммиты" }
+				,new ParametersRequestItem(){
+					Title = "Шаблон поиска",
 					Value = new StringValueItem(CommitMask),
 					Hint = "Например \"refs #%Identifier:\" где %Identifier это идентификатор задачи"
 				}
@@ -331,10 +360,11 @@ namespace repo_git
 			if (await parametersRequest(dict, "Git: Настройки"))
 			{
 				Master = (GitBranch)(dict[0].Value as ComboListValueItem).Value;
-				BranchTemplate = (dict[1].Value as StringValueItem).String;
-				CommitMask = (dict[2].Value as StringValueItem).String;
-				CommitStart = (bool)dict[3].Value;
-				CommitSearchMask = (dict[4].Value as StringValueItem).String;
+				BranchTemplate = (dict[2].Value as StringValueItem).String;
+				BranchTemplateTitle = (dict[3].Value as StringValueItem).String;
+				CommitMask = (dict[5].Value as StringValueItem).String;
+				CommitStart = (bool)dict[6].Value;
+				CommitSearchMask = (dict[7].Value as StringValueItem).String;
 				return true;
 			}
 			return false;
@@ -434,33 +464,67 @@ namespace repo_git
 		protected string GetNewBranchName(IIssue issue, string mask)
 		{
 			//todo: autofix
-			return GetMaskValue(mask, issue).Replace(' ', '_');
+			return GetMaskValue(mask, issue).Replace(' ', '_').Replace(':', '-');
 		}
 
-		public async Task<bool> CreateBranch(IIssue issue, ParametersRequest parametersRequest, ShowText showText)
+		public async Task<IBranch> FindBranch(Repository repo, IIssue issue, ParametersRequest parametersRequest, ShowText showText)
+		{
+			await FetchAll(repo, parametersRequest, showText);
+			UpdateBranches(repo);
+			var brunchNameHead = GetNewBranchName(issue, BranchTemplate);
+			return Branches.FirstOrDefault(b => b.Title.StartsWith(brunchNameHead, StringComparison.InvariantCultureIgnoreCase));
+		}
+
+		public async Task<IBranch> FindBranch(IIssue issue, ParametersRequest parametersRequest, ShowText showText)
 		{
 			try
 			{
 				using (var repo = new Repository(Path))
+					return await FindBranch(repo, issue, parametersRequest, showText);
+			}
+			catch (Exception e)
+			{
+				await showText(e.Message, 2000 + e.Message.Length * 25);
+				Helpers.ConsoleWrite(e.Message, ConsoleColor.Yellow);
+			}
+			return null;
+		}
+
+		public async Task<bool> CreateBranch(IIssue issue, ParametersRequest parametersRequest, ShowText showText)
+		{
+			var msgTitle = "Git: Создание ветки";
+			try
+			{
+				using (var repo = new Repository(Path))
 				{
+					var branch = await FindBranch(repo, issue, parametersRequest, showText);
+					if (branch != null)
+					{
+						var dictH = new IParametersRequestItem[] {
+							new TextRequestItem(){ Title = string.Format("Ветка для этой задачи уже существует:\r\n{0}\r\n\r\nСоздать новую ветку?", branch.Title) }
+						};
+
+						if (!await parametersRequest(dictH, msgTitle))
+							return true;
+					}
 					var sources = repo.Branches.Select(b => (object)new EntityBase() { Title = b.FriendlyName, Identifier = b.Tip.Sha }).ToList();
 					var headBranch = repo.Branches.FirstOrDefault(b => b.CanonicalName == repo.Head.CanonicalName);
 					var current = new EntityBase() { Title = repo.Head.Tip.MessageShort, Identifier = repo.Head.Tip.Sha };
 					if (headBranch == null)
 						sources.Insert(0, current);
-					var selected = sources.FirstOrDefault(s => (s as EntityBase).Title == (Master as GitBranch).Title) ?? sources.FirstOrDefault(s => (s as EntityBase).Title == repo.Head.FriendlyName) ?? current;
+					var selected = (Master == null ? null : sources.FirstOrDefault(s => (s as EntityBase).Title == (Master as GitBranch).Title)) ?? sources.FirstOrDefault(s => (s as EntityBase).Title == repo.Head.FriendlyName) ?? current;
 					var dict = new IParametersRequestItem[] {
-					new ParametersRequestItem(){
-						Title = "Источник",
-						Value = new ComboListValueItem(sources, selected)
-					}
-					,new ParametersRequestItem(){
-						Title = "Название ветки",
-						Value = new StringValueItem(GetNewBranchName(issue, BranchTemplate))
-					}
+						new ParametersRequestItem(){
+							Title = "Источник",
+							Value = new ComboListValueItem(sources, selected)
+						}
+						,new ParametersRequestItem(){
+							Title = "Название ветки",
+							Value = new StringValueItem(GetNewBranchName(issue, BranchTemplate + BranchTemplateTitle))
+						}
 					};
 
-					if (await parametersRequest(dict, "Git: Создание ветки"))
+					if (await parametersRequest(dict, msgTitle))
 					{
 						var commit = (EntityBase)(dict[0].Value as ComboListValueItem).Value;
 						var branchName = (dict[1].Value as StringValueItem).String;

@@ -15,40 +15,42 @@ namespace tracker_redmine
 	public class Redmine : BindableBase, ITracker, IModuleConfigurable
 	{
 		protected const string PREFIX = "REDMINE_";
-		protected const string USER = PREFIX + "USER";
-		protected const string PASS = PREFIX + "PASS";
-		protected const string URL = PREFIX + "URL";
-		protected const string TRACKERS_FILTER = PREFIX + "TRACKERS_FILTER";
-		protected const string STATUS_FILTER = PREFIX + "STATUS_FILTER";
+		protected const string USER = PREFIX + "USER[{0}]";
+		protected const string PASS = PREFIX + "PASS[{0}]";
+		protected const string URL = PREFIX + "URL[{0}]";
+		protected const string TRACKERS_FILTER = PREFIX + "TRACKERS_FILTER[{0}]";
+		protected const string STATUS_FILTER = PREFIX + "STATUS_FILTER[{0}]";
+
+		public string ConfigName { get; set; }
 
 		public string Url
 		{
-			get { return Helpers.ConfigRead(URL, string.Empty, true); }
-			set { Helpers.ConfigWrite(URL, value); }
+			get { return Helpers.ConfigRead(string.Format(URL, ConfigName), string.Empty, true); }
+			set { Helpers.ConfigWrite(string.Format(URL, ConfigName), value); }
 		}
 
 		public string User
 		{
-			get { return Helpers.ConfigRead(USER, string.Empty, true); }
-			set { Helpers.ConfigWrite(USER, value); }
+			get { return Helpers.ConfigRead(string.Format(USER, ConfigName), string.Empty, true); }
+			set { Helpers.ConfigWrite(string.Format(USER, ConfigName), value); }
 		}
 
 		public string Password
 		{
-			get { return Helpers.ConfigRead(PASS, string.Empty, true); }
-			set { Helpers.ConfigWrite(PASS, value); }
+			get { return Helpers.ConfigRead(string.Format(PASS, ConfigName), string.Empty, true); }
+			set { Helpers.ConfigWrite(string.Format(PASS, ConfigName), value); }
 		}
 
 		public string Trackers
 		{
-			get { return Helpers.ConfigRead(TRACKERS_FILTER, string.Empty, true); }
-			set { Helpers.ConfigWrite(TRACKERS_FILTER, value); }
+			get { return Helpers.ConfigRead(string.Format(TRACKERS_FILTER, ConfigName), string.Empty, true); }
+			set { Helpers.ConfigWrite(string.Format(TRACKERS_FILTER, ConfigName), value); }
 		}
 
 		public string Statuses
 		{
-			get { return Helpers.ConfigRead(STATUS_FILTER, string.Empty, true); }
-			set { Helpers.ConfigWrite(STATUS_FILTER, value); }
+			get { return Helpers.ConfigRead(string.Format(STATUS_FILTER, ConfigName), string.Empty, true); }
+			set { Helpers.ConfigWrite(string.Format(STATUS_FILTER, ConfigName), value); }
 		}
 
 		ObservableCollectionEx<IProject> _Projects = new ObservableCollectionEx<IProject>();
@@ -106,7 +108,16 @@ namespace tracker_redmine
 		{
 			try
 			{
-				var manager = await GetNew(parametersRequest);
+				RedmineManager manager = null;
+				try
+				{
+					manager = new RedmineManager(Url, User, Password);
+					manager.GetCurrentUser();
+				}
+				catch
+				{
+					manager = await GetNew(parametersRequest);
+				}
 				if (manager != null)
 				{
 					UpdateProjects(manager);

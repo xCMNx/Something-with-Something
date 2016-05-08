@@ -6,6 +6,7 @@ namespace core.Interfaces
 	public interface IModule : INotifyPropertyChanged
 	{
 		string Name { get; }
+		string ConfigName { get; set; }
 		Task<bool> UpdateAsync(ParametersRequest parametersRequest, ShowText showText);
 	}
 

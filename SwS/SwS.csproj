@@ -55,6 +55,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Bookmark.cs" />
     <Compile Include="CommandSink.cs" />
     <Compile Include="CommandSinkBinding.cs" />
     <Compile Include="PasswordHelper.cs" />

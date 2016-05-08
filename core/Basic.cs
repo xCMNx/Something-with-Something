@@ -30,6 +30,13 @@ namespace core
 		public string Hint { get; set; }
 	}
 
+	public class TextRequestItem : IParametersRequestItem
+	{
+		public string Title { get; set; }
+		public object Value { get { throw new InvalidOperationException(); } set { throw new InvalidOperationException(); } }
+		public string Hint { get { throw new InvalidOperationException(); } set { throw new InvalidOperationException(); } }
+	}
+
 	public class BoolRequestItem : IParametersRequestItem
 	{
 		public string Title { get; set; }

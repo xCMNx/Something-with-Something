@@ -17,6 +17,7 @@
         <local:CommandSinkBinding Command="local:MainVM.RepoSearchCommit" />
         <local:CommandSinkBinding Command="local:MainVM.RepoCreatebranch" />
         <local:CommandSinkBinding Command="local:MainVM.ChangePassCommand" />
+        <local:CommandSinkBinding Command="local:MainVM.BookmarkCommand" />
     </Window.CommandBindings>
 
     <Grid Name="MainWindowRoot">
@@ -74,11 +75,9 @@
                                                 <ContentPresenter Margin="2" Content="{Binding}"/>
                                             </StackPanel>
                                         </Expander.Header>
-                                        <Border MaxHeight="250" Background="LightYellow">
-                                            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                                                <TextBlock Margin="10" Text="{Binding Description}"/>
-                                            </ScrollViewer>
-                                        </Border>
+                                        <ScrollViewer Background="LightYellow" MaxHeight="250" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                                            <TextBlock Margin="10" Text="{Binding Description}" TextWrapping="Wrap"/>
+                                        </ScrollViewer>
                                     </Expander>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -122,30 +121,38 @@
             </Grid>
             <ui:MetroProgressBar IsIndeterminate="{Binding MainWait}" EllipseDiameter="5" Foreground="Black"/>
         </Grid>
-        <Button Command="local:MainVM.ChangePassCommand" Visibility="{Binding IsVisible, ElementName=QuestionPanel, Converter={StaticResource BoolToVisI}}" Background="{x:Null}" ToolTip="Сменить пароль" BorderBrush="{x:Null}" Height="30" Width="30" VerticalAlignment="Top" Margin="0,-20,0,0">
+        <ItemsControl ItemsSource="{Binding Bookmarks}" VerticalAlignment="Top" Visibility="{Binding Visibility, ElementName=btnPassChange}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel IsItemsHost="True" Orientation="Horizontal"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.Resources>
+                <DataTemplate DataType="{x:Type local:Bookmark}">
+                    <Button Background="Transparent" Command="local:MainVM.BookmarkCommand" CommandParameter="{Binding}" ToolTip="{Binding Name}" BorderBrush="{x:Null}" Style="{StaticResource HiddenButtonStyle}" BorderThickness="0" Width="32"  Margin="0,-55,0,0">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}">
+                                    <ContentControl Content="{TemplateBinding Content}"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Grid VerticalAlignment="Center">
+                            <Path Fill="{StaticResource RequestItem.Background}" Margin="1,0" Stretch="Uniform" Data="{StaticResource Icons.Data.Bookmark}" RenderTransformOrigin="0.5,0.5">
+                                <Path.RenderTransform>
+                                    <TransformGroup>
+                                        <ScaleTransform ScaleY="-1" ScaleX="1"/>
+                                    </TransformGroup>
+                                </Path.RenderTransform>
+                            </Path>
+                                <TextBlock Foreground="{StaticResource RequestItem.Foreground}" Text="{Binding Title}" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontWeight="Bold" Margin="0,5" FontSize="14"/>
+                        </Grid>
+                    </Button>
+                </DataTemplate>
+            </ItemsControl.Resources>
+        </ItemsControl>
+        <Button Command="local:MainVM.ChangePassCommand" Name="btnPassChange" Style="{StaticResource HiddenButtonStyle}" Visibility="{Binding IsVisible, ElementName=QuestionPanel, Converter={StaticResource BoolToVisI}}" Background="{x:Null}" ToolTip="Сменить пароль" BorderBrush="{x:Null}" Height="30" Width="30" VerticalAlignment="Top" Margin="0,-20,0,0">
             <Path Fill="Black" Data="{StaticResource Icons.Data.ChangeKey}" Stretch="Uniform"/>
-            <Button.Style>
-                <Style TargetType="Button">
-                    <Style.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Trigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <ThicknessAnimation Duration="0:0:0.2" Storyboard.TargetProperty="Margin" To="0"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <ThicknessAnimation Duration="0:0:1" Storyboard.TargetProperty="Margin"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.ExitActions>
-                        </Trigger>
-                    </Style.Triggers>
-                </Style>
-            </Button.Style>
         </Button>
         <ui:Question Name="QuestionPanel" DataContext="{Binding Question}" Visibility="{Binding Visibility}" Title="{Binding Title}" Messages="{Binding Messages}" Params="{Binding Fields}" OkCommand="{Binding Ok}" CancelCommand="{Binding Cancel}"/>
         <ui:Toast Name="ToastPanel" DataContext="{Binding Toast}" Text="{Binding Text}" Visibility="{Binding Visibility, Mode=OneWay}" Delay="{Binding Delay}"/>
