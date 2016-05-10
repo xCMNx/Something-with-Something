@@ -20,6 +20,12 @@ namespace core.BaseClasses
 			await Task.Yield();
 			return false;
 		}
+
+		public async Task<bool> UpdateSettingsAsync(ParametersRequest parametersRequest, ShowText showText)
+		{
+			await Task.Yield();
+			return false;
+		}
 	}
 	public class DummyTracker : DummyModule, ITracker
 	{

@@ -38,7 +38,7 @@ namespace SwS
 		static MainVM _instance;
 		public static MainVM Instance => _instance ?? (_instance = new MainVM());
 
-		public string Title => string.Format("{0} with {1}", Tracker?.Name, Repo?.Name); 
+		public string Title => string.Format("{0} with {1}", Tracker?.Name, Repo?.Name);
 
 		QuestionBlock _Question = new QuestionBlock();
 		public QuestionBlock Question => _Question;
@@ -152,7 +152,7 @@ namespace SwS
 			{
 				if (!await CheckSettingsPass())
 					Helpers.Post(Application.Current.Shutdown);
-				else 
+				else
 				{
 					LoadBookmarks();
 					if (!string.IsNullOrWhiteSpace(ConfigName))
@@ -164,7 +164,8 @@ namespace SwS
 		void LoadBookmarks()
 		{
 			var bms = Helpers.ConfigRead("Bookmarks", string.Empty).Split(new char[] { '\t' }, StringSplitOptions.RemoveEmptyEntries);
-			Helpers.Post(()=> Bookmarks.Reset(bms.Select(n=> new Bookmark(n))));
+			if(bms.Length > 0)
+				Helpers.Post(() => Bookmarks.Reset(bms.Select(n => new Bookmark(n))));
 		}
 
 		void SaveBookmarks()
@@ -274,7 +275,7 @@ namespace SwS
 		protected void InitRepoCommands()
 		{
 			CommitsSortCommand = new Command(CommitsSortCommandExecute);
-			ChangeRepo = new Command(a => UpdateRepo());
+			ChangeRepo = new Command(a => UpdateSettingsRepo());
 			RepoAdvansed = new Command(a => ConfigurateRepo(), o => Repo is IModuleConfigurable);
 			RegisterCommand(
 				RepoSearchCommit,
@@ -349,8 +350,8 @@ namespace SwS
 		bool reverse = true;
 		void UpdateCommitsList()
 		{
-				Commits = SortBy(_commits, selectors[lastSortedColumn], reverse);
-				NotifyPropertyChanged(nameof(Commits));
+			Commits = SortBy(_commits, selectors[lastSortedColumn], reverse);
+			NotifyPropertyChanged(nameof(Commits));
 		}
 
 		void CommitsSortCommandExecute(object parameter)
@@ -391,6 +392,12 @@ namespace SwS
 			}
 		}
 
+		public async void UpdateSettingsRepo()
+		{
+			if (await Repo.UpdateSettingsAsync(Question.ShowAsync, Toast.ShowAsync))
+				UpdateRepo();
+		}
+
 		#endregion
 
 		#region Tracker
@@ -412,11 +419,11 @@ namespace SwS
 			}
 		}
 
-		async void initTracker()
+		void initTracker()
 		{
 			Tracker = new Redmine();
 			Tracker.ConfigName = ConfigName;
-			await UpdateTracker();
+			UpdateTracker();
 			var lpiId = Helpers.ReadFromConfig(string.Format("LastProjectId[{0}]", ConfigName), null);
 			Helpers.Post(()=>
 			{
@@ -425,7 +432,7 @@ namespace SwS
 			});
 		}
 
-		public async Task UpdateTracker()
+		public async void UpdateTracker()
 		{
 			BeginWait();
 			try
@@ -437,6 +444,12 @@ namespace SwS
 			{
 				EndWait();
 			}
+		}
+
+		public async void UpdateSettingsTracker()
+		{
+			if(await Tracker.UpdateSettingsAsync(Question.ShowAsync, Toast.ShowAsync))
+				UpdateTracker();
 		}
 
 		public async void UpdateIssues()
@@ -464,7 +477,7 @@ namespace SwS
 
 		void InitTrackerCommands()
 		{
-			ChangeTracker = new Command(a => UpdateTracker());
+			ChangeTracker = new Command(a => UpdateSettingsTracker());
 			TrackerAdvansed = new Command(a => ConfigurateTracker(), o => Tracker is IModuleConfigurable);
 		}
 

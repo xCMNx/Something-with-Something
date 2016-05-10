@@ -8,6 +8,7 @@ namespace core.Interfaces
 		string Name { get; }
 		string ConfigName { get; set; }
 		Task<bool> UpdateAsync(ParametersRequest parametersRequest, ShowText showText);
+		Task<bool> UpdateSettingsAsync(ParametersRequest parametersRequest, ShowText showText);
 	}
 
 	public interface IModuleConfigurable : INotifyPropertyChanged

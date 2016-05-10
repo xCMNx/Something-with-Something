@@ -173,12 +173,17 @@ namespace repo_git
 			{
 				FullName = b.FriendlyName,
 				Title = System.IO.Path.GetFileName(b.FriendlyName),
-				Identifier = b.CanonicalName
+				Identifier = b.CanonicalName,
+				IsRemote = b.IsRemote
 			}).ToArray();
 		}
 
+		DateTime LastFetched = DateTime.MinValue;
+
 		public async Task FetchAll(Repository repo, ParametersRequest parametersRequest, ShowText showText)
 		{
+			if ((DateTime.Now - LastFetched).TotalMinutes < 1)
+				return;
 			foreach (Remote remote in repo.Network.Remotes)
 			{
 				FetchOptions options = new FetchOptions();
@@ -209,6 +214,7 @@ namespace repo_git
 					Helpers.ConsoleWrite(msg, ConsoleColor.Yellow);
 				}
 			}
+			LastFetched = DateTime.Now;
 		}
 
 		protected void UpdateBranches()
@@ -228,18 +234,10 @@ namespace repo_git
 			Master = string.IsNullOrWhiteSpace(mName) ? null : Branches.FirstOrDefault(b => Equals(b.Identifier, mName));
 		}
 
-		public async Task<bool> UpdateAsync(ParametersRequest parametersRequest, ShowText showText)
+		public async Task<bool> UpdateSettingsAsync(ParametersRequest parametersRequest, ShowText showText)
 		{
 			try
 			{
-				try
-				{
-					await TryUpdate(parametersRequest, showText);
-					return true;
-				}
-				catch
-				{
-				}
 				string message = null;
 				while (await AskAuthInfo(parametersRequest, message))
 				{
@@ -263,9 +261,29 @@ namespace repo_git
 			return false;
 		}
 
+		public async Task<bool> UpdateAsync(ParametersRequest parametersRequest, ShowText showText)
+		{
+			try
+			{
+				await TryUpdate(parametersRequest, showText);
+				return true;
+			}
+			catch
+			{
+			}
+			return await UpdateSettingsAsync(parametersRequest, showText);
+		}
+
 		IList<ICommit> ConvertCommits(IEnumerable<Commit> commits)
 		{
 			return commits.Select(c => new GitCommit(c.Sha, c.MessageShort, c.Message, string.Format("{0} <{1}>", c.Author.Name, c.Author.Email), c.Author.When.DateTime)).ToArray();
+		}
+
+		Branch GetBranch(Repository repo, IBranch branch)
+		{
+			if (branch == null)
+				return null;
+			return repo.Branches.FirstOrDefault(b => Equals(branch.Identifier, b.CanonicalName));
 		}
 
 		public IList<ICommit> GetCommits(IBranch branch, ShowText showText)
@@ -280,12 +298,12 @@ namespace repo_git
 					{
 						using (var repo = new Repository(Path))
 						{
-							var mbr = Master == null ? repo.Head : repo.Branches.FirstOrDefault(b => Equals(b.CanonicalName, Master.Identifier)) ?? repo.Head;
+							var mbr = GetBranch(repo, Master) ?? repo.Head;
 							//if (mbr == null)
 							//	showText(string.Format("Ветка {0} не найдена, обновите список веток.", Master));
 							//else
 							{
-								var br = repo.Branches.FirstOrDefault(b => Equals(b.CanonicalName, branch.Identifier));
+								var br = GetBranch(repo, branch);
 								if (br == null)
 									showText(string.Format("Ветка {0} не найдена, обновите список веток.", branch));
 								else
@@ -326,7 +344,7 @@ namespace repo_git
 			var dict = new IParametersRequestItem[] {
 				new ParametersRequestItem(){
 					Title = "Основная ветка",
-					Value = new ComboListValueItem(Branches.OfType<GitBranch>().ToArray(), Master)
+					Value = new ComboListValueItem(Branches.OfType<GitBranch>().Where(b => !b.IsRemote).ToArray(), Master)
 				}
 				,new HeaderRequestItem() { Title = "Ветки" }
 				,new ParametersRequestItem(){
@@ -464,6 +482,33 @@ namespace repo_git
 		protected string GetNewBranchName(IIssue issue, string mask)
 		{
 			//todo: autofix
+			//http://git-scm.com/docs/git-check-ref-format
+			//git imposes the following rules on how references are named:
+
+			// - They can include slash / for hierarchical(directory) grouping,
+			//but no slash-separated component can begin with a dot.or end with the sequence.lock
+
+			// - They must contain at least one /. This enforces the presence of a category like heads/,
+			//tags/ etc.but the actual names are not restricted.If the --allow-onelevel option is used,
+			//this rule is waived
+
+			// - They cannot have two consecutive dots..anywhere
+
+			// - They cannot have ASCII control characters (i.e.bytes whose values are lower
+			//than \040, or \177 DEL), space, tilde ~, caret ^, or colon : anywhere
+
+			// - They cannot have question-mark?, asterisk*, or open bracket[anywhere.See
+			//the--refspec - pattern option below for an exception to this rule
+
+			//- They cannot begin or end with a slash / or contain multiple consecutive slashes
+			//(see the--normalize option below for an exception to this rule)
+
+			//- They cannot end with a dot.
+
+
+			//- They cannot contain a sequence @{
+
+			// - They cannot contain a \
 			return GetMaskValue(mask, issue).Replace(' ', '_').Replace(':', '-');
 		}
 

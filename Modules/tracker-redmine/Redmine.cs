@@ -104,6 +104,31 @@ namespace tracker_redmine
 			Helpers.Post(() => _Projects.Reset(projects.Select(p => new RedmineProject() { Title = p.Name, Identifier = p.Id })));
 		}
 
+		bool reconfig(RedmineManager manager)
+		{
+			if (manager != null)
+			{
+				UpdateProjects(manager);
+				Manager = manager;
+				return true;
+			}
+			return false;
+		}
+
+		public async Task<bool> UpdateSettingsAsync(ParametersRequest parametersRequest, ShowText showText)
+		{
+			try
+			{
+				return reconfig(await GetNew(parametersRequest));
+			}
+			catch (Exception e)
+			{
+				await showText(e.Message);
+				Helpers.ConsoleWrite(e.Message, ConsoleColor.Yellow);
+			}
+			return false;
+		}
+
 		public async Task<bool> UpdateAsync(ParametersRequest parametersRequest, ShowText showText)
 		{
 			try
@@ -118,12 +143,7 @@ namespace tracker_redmine
 				{
 					manager = await GetNew(parametersRequest);
 				}
-				if (manager != null)
-				{
-					UpdateProjects(manager);
-					Manager = manager;
-					return true;
-				}
+				return reconfig(manager);
 			}
 			catch (Exception e)
 			{
