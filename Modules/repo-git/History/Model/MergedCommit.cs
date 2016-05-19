@@ -112,7 +112,7 @@ namespace Palmmedia.GitHistory.Core.Model
 			}
 		}
 
-		public string Autor
+		public string Author
 		{
 			get
 			{

@@ -184,6 +184,7 @@ namespace repo_git
 		{
 			if ((DateTime.Now - LastFetched).TotalMinutes < 1)
 				return;
+			LastFetched = DateTime.Now;
 			foreach (Remote remote in repo.Network.Remotes)
 			{
 				FetchOptions options = new FetchOptions();
@@ -209,12 +210,12 @@ namespace repo_git
 				}
 				catch (Exception e)
 				{
+					LastFetched = DateTime.MinValue;
 					var msg = string.Format("{0}:\r\n{1}", remote.Url, e.Message);
 					await showText(msg);
 					Helpers.ConsoleWrite(msg, ConsoleColor.Yellow);
 				}
 			}
-			LastFetched = DateTime.Now;
 		}
 
 		protected void UpdateBranches()
@@ -590,6 +591,71 @@ namespace repo_git
 				Helpers.ConsoleWrite(e.Message, ConsoleColor.Yellow);
 			}
 			return false;
+		}
+
+		Identity GetIdentity(Repository repo)
+		{
+			return new Identity(repo.Config.GetValueOrDefault<string>("user.name"), repo.Config.GetValueOrDefault<string>("user.email"));
+		}
+
+		public async Task UpToDate(IBranch branch, ParametersRequest parametersRequest, ShowText showText)
+		{
+			if (branch == null)
+				await showText("Ветка не выбрана.");
+			else if (Master == null)
+				await showText("Основная ветка не выбрана.");
+			else
+			{
+				try
+				{
+					using (var repo = new Repository(Path))
+					{
+						//repo.Checkout("master", new CheckoutOptions() { CheckoutModifiers = CheckoutModifiers.Force });
+						await FetchAll(repo, parametersRequest, showText);
+						var br = GetBranch(repo, branch);
+						if (br == null)
+							await showText("Ветка не найдена, обновите список веток.");
+						else
+						{
+							var mbr = GetBranch(repo, Master);
+							if (mbr == null)
+								await showText("Основная ветка не найдена, обновите список веток.");
+							else if(mbr == br)
+								await showText("Нельзя обновить выбранную ветку т.к. она является основной.");
+							else
+							{
+								var upstreamCommit = br.Commits.Except(mbr.Commits).ToArray().Last().Parents.FirstOrDefault();
+								if (upstreamCommit == null || upstreamCommit == mbr.Tip)
+									await showText("Ветка актуальна.");
+								else
+								{
+									Branch tmp = null;
+									var upstream = repo.Branches.FirstOrDefault(b => b.Tip.Sha == upstreamCommit.Sha) ?? (tmp = repo.CreateBranch($"{br.FriendlyName}-rebase_upstream", upstreamCommit));
+									try
+									{
+										//repo.Checkout(toRebase.Last());
+										var opt = new RebaseOptions();
+										var identity = GetIdentity(repo);
+										var res = repo.Rebase.Start(br, upstream, mbr, identity, opt);
+									}
+									finally
+									{
+										if (tmp != null)
+											repo.Branches.Remove(tmp);
+									}
+									//new PullOptions()
+									//repo.Network.Pull(new Signature("sdf", "sdf", new DateTimeOffset(DateTime.Now)),
+								}
+							}
+						}
+					}
+				}
+				catch (Exception e)
+				{
+					await showText(e.Message, 2000 + e.Message.Length * 25);
+					Helpers.ConsoleWrite(e.Message, ConsoleColor.Yellow);
+				}
+			}
 		}
 	}
 }

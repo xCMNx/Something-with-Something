@@ -101,7 +101,7 @@ namespace tracker_redmine
 		public void UpdateProjects(RedmineManager manager)
 		{
 			var projects = manager.GetObjects<Project>(new NameValueCollection());
-			Helpers.Post(() => _Projects.Reset(projects.Select(p => new RedmineProject() { Title = p.Name, Identifier = p.Id })));
+			Helpers.Send(() => _Projects.Reset(projects.Select(p => new RedmineProject() { Title = p.Name, Identifier = p.Id })));
 		}
 
 		bool reconfig(RedmineManager manager)

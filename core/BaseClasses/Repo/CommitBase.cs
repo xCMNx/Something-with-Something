@@ -5,7 +5,7 @@ namespace core.BaseClasses.Repo
 {
 	public class CommitBase : EntityBase, ICommit
 	{
-		public string Autor { get; set; }
+		public string Author { get; set; }
 		public DateTime Date { get; set; }
 		public string Message { get; set; }
 	}

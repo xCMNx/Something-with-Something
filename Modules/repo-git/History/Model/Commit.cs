@@ -15,9 +15,9 @@ namespace Palmmedia.GitHistory.Core.Model
 		/// <param name="id">The identifier.</param>
 		/// <param name="title">The first line of the message..</param>
 		/// <param name="message">The message.</param>
-		/// <param name="autor">The autor of the commit</param>
+		/// <param name="author">The autor of the commit</param>
 		/// <param name="date">The date of the commit</param>
-		public GitCommit(string id, string title, string message, string autor, DateTime date)
+		public GitCommit(string id, string title, string message, string author, DateTime date)
 		{
 			if (id == null)
 			{
@@ -25,7 +25,7 @@ namespace Palmmedia.GitHistory.Core.Model
 			}
 
 			Title = title;
-			Autor = autor;
+			Author = author;
 			Id = id;
 			Message = string.Format("{0}: {1}", this.ShortId, FormatMessage(message ?? string.Empty));
 			Date = date;
@@ -33,7 +33,7 @@ namespace Palmmedia.GitHistory.Core.Model
 			Children = new HashSet<GitCommit>();
 		}
 
-		public string Autor { get; protected set; }
+		public string Author { get; protected set; }
 		public string Title { get; protected set; }
 		public object Identifier => Id;
 
@@ -135,7 +135,7 @@ namespace Palmmedia.GitHistory.Core.Model
 		/// Returns a hash code for this instance.
 		/// </summary>
 		/// <returns>
-		/// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table. 
+		/// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
 		/// </returns>
 		public override int GetHashCode()
 		{

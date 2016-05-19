@@ -63,5 +63,10 @@ namespace core.BaseClasses
 			await Task.Yield();
 			return new ICommit[0];
 		}
+
+		public async Task UpToDate(IBranch branch, ParametersRequest parametersRequest, ShowText showText)
+		{
+			await Task.Yield();
+		}
 	}
 }

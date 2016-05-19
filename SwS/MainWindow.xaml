@@ -19,6 +19,10 @@
         <local:CommandSinkBinding Command="local:MainVM.RepoSelectBranch" />
         <local:CommandSinkBinding Command="local:MainVM.ChangePassCommand" />
         <local:CommandSinkBinding Command="local:MainVM.BookmarkCommand" />
+        <local:CommandSinkBinding Command="local:MainVM.RepoUpToDateBranch" />
+        <local:CommandSinkBinding Command="local:MainVM.TrackerUpdate" />
+        <local:CommandSinkBinding Command="local:MainVM.RepoUpdate" />
+        <local:CommandSinkBinding Command="local:MainVM.UpdateAllCommand" />
     </Window.CommandBindings>
 
     <Grid Name="MainWindowRoot">
@@ -49,6 +53,7 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <Button Margin="0,2" Grid.Column="0" Background="Transparent" Command="{Binding ChangeTracker}" ToolTip="Настройки трекера">
                             <Path Margin="2" Data="{StaticResource Icons.Data.Settings}" Stretch="Uniform" Fill="Black" Height="15" Width="15"/>
@@ -59,6 +64,9 @@
                         <Grid Grid.Column="2" Margin="2" Grid.IsSharedSizeScope="True">
                             <ComboBox SelectedItem="{Binding Project}" ItemsSource="{Binding Projects}" ToolTip="Проект"/>
                         </Grid>
+                        <Button Margin="0,2" Grid.Column="3" Background="Transparent" Command="local:MainVM.TrackerUpdate" ToolTip="Обновить">
+                            <Path Margin="2" Data="{StaticResource Icons.Data.Update}" Stretch="Uniform" Fill="Black" Height="15" Width="15"/>
+                        </Button>
                     </Grid>
                     <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding Issues}">
@@ -103,6 +111,8 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <Button Margin="0,2" Grid.Column="0" Background="Transparent" Command="{Binding ChangeRepo}" ToolTip="Настройки репозитория">
                             <Path Margin="2" Data="{StaticResource Icons.Data.Settings}" Stretch="Uniform" Fill="Black" Height="15" Width="15"/>
@@ -113,12 +123,18 @@
                         <Grid Grid.Column="2" Margin="2" Grid.IsSharedSizeScope="True">
                             <ComboBox SelectedItem="{Binding Branch}" ItemsSource="{Binding Branches}" ToolTip="Ветка"/>
                         </Grid>
+                        <Button Margin="0,2" Grid.Column="3" Background="Transparent" Command="local:MainVM.RepoUpdate" ToolTip="Обновить">
+                            <Path Margin="2" Data="{StaticResource Icons.Data.Update}" Stretch="Uniform" Fill="Black" Height="15" Width="15"/>
+                        </Button>
+                        <Button Margin="0,2" Grid.Column="4" Background="Transparent" Command="local:MainVM.RepoUpToDateBranch" CommandParameter="{Binding Branch}" ToolTip="Обновить ветку (перенести над основной)">
+                            <Path Margin="2" Data="{StaticResource Icons.Data.UpToDateBranch}" Stretch="Uniform" Fill="Black" Height="15" Width="15"/>
+                        </Button>
                     </Grid>
                     <ListView Grid.Row="1" ItemsSource="{Binding Commits}" util:GridViewSort.Command="{Binding CommitsSortCommand}">
                         <ListView.View>
                             <GridView>
                                 <GridViewColumn Header="Title" Width="300" DisplayMemberBinding="{Binding Title}" util:GridViewSort.PropertyName="Title"/>
-                                <GridViewColumn Header="Autor" Width="Auto" DisplayMemberBinding="{Binding Autor}" util:GridViewSort.PropertyName="Autor"/>
+                                <GridViewColumn Header="Author" Width="Auto" DisplayMemberBinding="{Binding Author}" util:GridViewSort.PropertyName="Author"/>
                                 <GridViewColumn Header="Date" Width="Auto" DisplayMemberBinding="{Binding Date}" util:GridViewSort.PropertyName="Date"/>
                             </GridView>
                         </ListView.View>

@@ -110,6 +110,7 @@ namespace SwS
 		public static readonly RoutedCommand SelectPathCommand = new RoutedCommand();
 		public static readonly RoutedCommand ChangePassCommand = new RoutedCommand();
 		public static readonly RoutedCommand BookmarkCommand = new RoutedCommand();
+		public static readonly RoutedCommand UpdateAllCommand = new RoutedCommand();
 
 		public MainVM()
 		{
@@ -129,6 +130,17 @@ namespace SwS
 				param => true,
 				SetBookmark
 			);
+			RegisterCommand(
+				UpdateAllCommand,
+				param => true,
+				param =>
+				{
+					UpdateRepo();
+					UpdateTracker();
+				}
+			);
+			UpdateAllCommand.InputGestures.Add(new KeyGesture(Key.F5));
+
 			InitTrackerCommands();
 			InitRepoCommands();
 			init();
@@ -271,6 +283,8 @@ namespace SwS
 		public static readonly RoutedCommand RepoSearchCommit = new RoutedCommand();
 		public static readonly RoutedCommand RepoCreateBranch = new RoutedCommand();
 		public static readonly RoutedCommand RepoSelectBranch = new RoutedCommand();
+		public static readonly RoutedCommand RepoUpToDateBranch = new RoutedCommand();
+		public static readonly RoutedCommand RepoUpdate = new RoutedCommand();
 
 		protected void InitRepoCommands()
 		{
@@ -291,6 +305,16 @@ namespace SwS
 				RepoSelectBranch,
 				param => true,
 				SelectBranch
+			);
+			RegisterCommand(
+				RepoUpToDateBranch,
+				param => true,
+				UpToDateBranch
+			);
+			RegisterCommand(
+				RepoUpdate,
+				param => true,
+				param => UpdateRepo()
 			);
 		}
 
@@ -334,19 +358,33 @@ namespace SwS
 			NotifyPropertyChanged(nameof(Branches));
 		}
 
+		public async void UpToDateBranch(object prop)
+		{
+			RepoWait = true;
+			try
+			{
+				await Repo.UpToDate(prop as IBranch, Question.ShowAsync, Toast.ShowAsync);
+				UpdateRepo();
+			}
+			finally
+			{
+				RepoWait = false;
+			}
+		}
+
 		/// <summary>
 		/// Для связи столбца и поля по которому сортируем
 		/// </summary>
 		Dictionary<object, Func<ICommit, object>> selectors = new Dictionary<object, Func<ICommit, object>>()
 		{
-			{ "Date", c => c.Date }
-			,{ "Autor", c => c.Autor }
-			,{ "Title", c => c.Title }
+			{ nameof(ICommit.Date), c => c.Date }
+			,{ nameof(ICommit.Author), c => c.Author }
+			,{ nameof(ICommit.Title), c => c.Title }
 		};
 
 		IList<TSource> SortBy<TSource, TKey>(IEnumerable<TSource> src, Func<TSource, TKey> selector, bool reverse) => (reverse ? src.OrderByDescending(selector) : src.OrderBy(selector)).ToArray();
 
-		object lastSortedColumn = "Date";
+		object lastSortedColumn = nameof(ICommit.Date);
 		bool reverse = true;
 		void UpdateCommitsList()
 		{
@@ -375,19 +413,27 @@ namespace SwS
 			}
 		}
 
+		bool _repoUpdating = false;
+
 		public async void UpdateRepo()
 		{
+			if (_repoUpdating) return;
+			_repoUpdating = true;
 			BeginWait();
 			try
 			{
+				var old = _Branch;
 				if (await Repo.UpdateAsync(Question.ShowAsync, Toast.ShowAsync))
 				{
 					NotifyPropertyChanged(nameof(Branches));
+					if (old != null)
+						Branch = Branches.FirstOrDefault(b => b.Identifier.Equals(old.Identifier));
 					UpdateCommits();
 				}
 			}
 			finally
 			{
+				_repoUpdating = false;
 				EndWait();
 			}
 		}
@@ -432,16 +478,26 @@ namespace SwS
 			});
 		}
 
+		bool _TrackerUpdating = false;
+
 		public async void UpdateTracker()
 		{
+			if (_TrackerUpdating) return;
+			_TrackerUpdating = true;
 			BeginWait();
 			try
 			{
-				await Tracker.UpdateAsync(Question.ShowAsync, Toast.ShowAsync);
-				NotifyPropertyChanged(nameof(Projects));
+				var old = _Project;
+				if (await Tracker.UpdateAsync(Question.ShowAsync, Toast.ShowAsync))
+				{
+					NotifyPropertyChanged(nameof(Projects));
+					if (old != null)
+						Project = Projects.FirstOrDefault(p => p.Identifier.Equals(old.Identifier));
+				}
 			}
 			finally
 			{
+				_TrackerUpdating = false;
 				EndWait();
 			}
 		}
@@ -474,11 +530,17 @@ namespace SwS
 
 		public Command ChangeTracker { get; private set; }
 		public Command TrackerAdvansed { get; private set; }
+		public static readonly RoutedCommand TrackerUpdate = new RoutedCommand();
 
 		void InitTrackerCommands()
 		{
 			ChangeTracker = new Command(a => UpdateSettingsTracker());
 			TrackerAdvansed = new Command(a => ConfigurateTracker(), o => Tracker is IModuleConfigurable);
+			RegisterCommand(
+				TrackerUpdate,
+				param => true,
+				param => UpdateTracker()
+			);
 		}
 
 		#endregion
