@@ -541,47 +541,76 @@ namespace repo_git
 			return await FindBranch(issue, parametersRequest, showText);
 		}
 
-		public async Task<bool> CreateBranch(IIssue issue, ParametersRequest parametersRequest, ShowText showText)
+		async Task<IBranch> NewBranch(Repository repo, string desiredName, ParametersRequest parametersRequest, ShowText showText)
 		{
-			var msgTitle = "Git: Создание ветки";
-			try
-			{
-				using (var repo = new Repository(Path))
-				{
-					var branch = await FindBranch(repo, issue, parametersRequest, showText);
-					if (branch != null)
-					{
-						var dictH = new IParametersRequestItem[] {
-							new TextRequestItem(){ Title = string.Format("Ветка для этой задачи уже существует:\r\n{0}\r\n\r\nСоздать новую ветку?", branch.Title) }
-						};
-
-						if (!await parametersRequest(dictH, msgTitle))
-							return true;
-					}
-					var sources = repo.Branches.Select(b => (object)new EntityBase() { Title = b.FriendlyName, Identifier = b.Tip.Sha }).ToList();
-					var headBranch = repo.Branches.FirstOrDefault(b => b.CanonicalName == repo.Head.CanonicalName);
-					var current = new EntityBase() { Title = repo.Head.Tip.MessageShort, Identifier = repo.Head.Tip.Sha };
-					if (headBranch == null)
-						sources.Insert(0, current);
-					var selected = (Master == null ? null : sources.FirstOrDefault(s => (s as EntityBase).Title == (Master as GitBranch).Title)) ?? sources.FirstOrDefault(s => (s as EntityBase).Title == repo.Head.FriendlyName) ?? current;
-					var dict = new IParametersRequestItem[] {
+			var sources = repo.Branches.Select(b => (object)new EntityBase() { Title = b.FriendlyName, Identifier = b.Tip.Sha }).ToList();
+			var headBranch = repo.Branches.FirstOrDefault(b => b.CanonicalName == repo.Head.CanonicalName);
+			var current = new EntityBase() { Title = repo.Head.Tip.MessageShort, Identifier = repo.Head.Tip.Sha };
+			if (headBranch == null)
+				sources.Insert(0, current);
+			var selected = (Master == null ? null : sources.FirstOrDefault(s => (s as EntityBase).Title == (Master as GitBranch).Title)) ?? sources.FirstOrDefault(s => (s as EntityBase).Title == repo.Head.FriendlyName) ?? current;
+			var dict = new IParametersRequestItem[] {
 						new ParametersRequestItem(){
 							Title = "Источник",
 							Value = new ComboListValueItem(sources, selected)
 						}
 						,new ParametersRequestItem(){
 							Title = "Название ветки",
-							Value = new StringValueItem(GetNewBranchName(issue, BranchTemplate + BranchTemplateTitle))
+							Value = new StringValueItem(desiredName)
 						}
 					};
 
-					if (await parametersRequest(dict, msgTitle))
+			if (await parametersRequest(dict, "Git: Создание ветки"))
+			{
+				var commit = (EntityBase)(dict[0].Value as ComboListValueItem).Value;
+				var branchName = (dict[1].Value as StringValueItem).String;
+				var br = repo.CreateBranch(branchName, repo.Lookup<Commit>((string)commit.Identifier));
+				UpdateBranches(repo);
+				return Branches.FirstOrDefault(b => br.CanonicalName.Equals(b.Identifier));
+			}
+			return null;
+		}
+
+		public async Task<IBranch> CreateBranch(IIssue issue, ParametersRequest parametersRequest, ShowText showText)
+		{
+			IBranch branch = null;
+			try
+			{
+				using (var repo = new Repository(Path))
+				{
+					branch = await FindBranch(repo, issue, parametersRequest, showText);
+					if (branch == null || await parametersRequest(new IParametersRequestItem[] { new TextRequestItem() { Title = string.Format("Ветка для этой задачи уже существует:\r\n{0}\r\n\r\nСоздать новую ветку?", branch.Title) } }, "Git: Создание ветки"))
+						branch = await NewBranch(repo, GetNewBranchName(issue, BranchTemplate + BranchTemplateTitle), parametersRequest, showText);
+					if (await parametersRequest(new IParametersRequestItem[] { new TextRequestItem() { Title = $"Перейти на ветку: {branch.Title}" } }, "Git: Создание ветки"))
+						repo.Checkout(repo.Branches.FirstOrDefault(br => br.CanonicalName.Equals(branch.Identifier)));
+				}
+			}
+			catch (Exception e)
+			{
+				await showText(e.Message, 2000 + e.Message.Length * 25);
+				Helpers.ConsoleWrite(e.Message, ConsoleColor.Yellow);
+			}
+			return branch;
+		}
+
+		public async Task<bool> Switch(IBranch branch, ShowText showText)
+		{
+			try
+			{
+				if (branch == null)
+					await showText("Ветка не выбрана.");
+				else
+				{
+					using (var repo = new Repository(Path))
 					{
-						var commit = (EntityBase)(dict[0].Value as ComboListValueItem).Value;
-						var branchName = (dict[1].Value as StringValueItem).String;
-						repo.CreateBranch(branchName, repo.Lookup<Commit>((string)commit.Identifier));
-						UpdateBranches(repo);
-						return true;
+						var br = repo.Branches.FirstOrDefault(b => b.FriendlyName.Equals(branch.Identifier));
+						if (br == null)
+							await showText("Ветка не найдена.");
+						else
+						{
+							repo.Checkout(br);
+							return true;
+						}
 					}
 				}
 			}

@@ -40,10 +40,10 @@ namespace core.BaseClasses
 	{
 		public IList<IBranch> Branches => new IBranch[0];
 		public IBranch Master => null;
-		public async Task<bool> CreateBranch(IIssue issue, ParametersRequest parametersRequest, ShowText showText)
+		public async Task<IBranch> CreateBranch(IIssue issue, ParametersRequest parametersRequest, ShowText showText)
 		{
 			await Task.Yield();
-			return false;
+			return null;
 		}
 
 		public async Task<IBranch> GetBranch(IIssue issue, ParametersRequest parametersRequest, ShowText showText)
@@ -62,6 +62,12 @@ namespace core.BaseClasses
 		{
 			await Task.Yield();
 			return new ICommit[0];
+		}
+
+		public async Task<bool> Switch(IBranch branch, ShowText showText)
+		{
+			await Task.Yield();
+			return false;
 		}
 
 		public async Task UpToDate(IBranch branch, ParametersRequest parametersRequest, ShowText showText)

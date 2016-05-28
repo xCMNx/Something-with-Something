@@ -348,8 +348,10 @@ namespace SwS
 
 		public async void CreateBranch(object prop)
 		{
-			if (await Repo.CreateBranch(prop as IIssue, Question.ShowAsync, Toast.ShowAsync))
-				NotifyPropertyChanged(nameof(Branches));
+			var br = await Repo.CreateBranch(prop as IIssue, Question.ShowAsync, Toast.ShowAsync);
+			NotifyPropertyChanged(nameof(Branches));
+			if (br != null)
+				Branch = br;
 		}
 
 		public async void SelectBranch(object prop)
@@ -458,11 +460,17 @@ namespace SwS
 			get { return _Project; }
 			set
 			{
-				_Project = value;
-				NotifyPropertyChanged(nameof(Project));
-				Helpers.ConfigWrite(string.Format("LastProjectId[{0}]", ConfigName), value?.Identifier);
-				UpdateIssues();
+				if (!_TrackerUpdating)
+					InternalSetProject(value);
 			}
+		}
+
+		void InternalSetProject(IProject value)
+		{
+			_Project = value;
+			NotifyPropertyChanged(nameof(Project));
+			Helpers.ConfigWrite(string.Format("LastProjectId[{0}]", ConfigName), value?.Identifier);
+			UpdateIssues();
 		}
 
 		void initTracker()
@@ -492,7 +500,7 @@ namespace SwS
 				{
 					NotifyPropertyChanged(nameof(Projects));
 					if (old != null)
-						Project = Projects.FirstOrDefault(p => p.Identifier.Equals(old.Identifier));
+						InternalSetProject(Projects.FirstOrDefault(p => p.Identifier.Equals(old.Identifier)));
 				}
 			}
 			finally
